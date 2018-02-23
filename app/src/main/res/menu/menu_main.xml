@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.ymlion.apkload.MainActivity" >
+    <item android:id="@+id/action_green"
+        android:title="@string/action_green"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/action_red"
+        android:title="@string/action_red"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+</menu>
