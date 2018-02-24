@@ -20,6 +20,7 @@ public class InstrumentationProxy extends Instrumentation {
     @Override public Activity newActivity(ClassLoader cl, String className, Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
         Log.e("InstrumentationProxy", "newActivity: " + className);
+        className = intent.getStringExtra("targetClass");
         return proxy.newActivity(cl, className, intent);
     }
 }

@@ -17,6 +17,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.Toast;
+import com.ymlion.apkload.util.HookUtil;
 import dalvik.system.DexClassLoader;
 import dalvik.system.PathClassLoader;
 import java.io.File;
@@ -43,25 +44,8 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(MainActivity.this, New1Activity.class));
         });
         mImageView = findViewById(R.id.image);
-        hookInstrumentation();
-    }
-
-    private void hookInstrumentation() {
-        try {
-            Class<?> clazz = Class.forName("android.app.ActivityThread");
-            Method ca = clazz.getDeclaredMethod("currentActivityThread");
-            ca.setAccessible(true);
-            Object currentAT = ca.invoke(null);
-
-            Field mInstrumentation = clazz.getDeclaredField("mInstrumentation");
-            mInstrumentation.setAccessible(true);
-            Instrumentation instrumentation = (Instrumentation) mInstrumentation.get(currentAT);
-
-            InstrumentationProxy proxy = new InstrumentationProxy(instrumentation);
-            mInstrumentation.set(currentAT, proxy);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        HookUtil.hookAMS();
+        HookUtil.hookInstrumentation();
     }
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {

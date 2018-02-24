@@ -1,4 +1,4 @@
-package com.ymlion.apkload;
+package com.ymlion.apkload.handler;
 
 import android.os.IBinder;
 import android.os.IInterface;
@@ -17,7 +17,7 @@ public class BinderProxyHandler implements InvocationHandler {
     private Class<?> stub;
     private Class<?> iinterface;
 
-    BinderProxyHandler(IBinder obj) {
+    public BinderProxyHandler(IBinder obj) {
         base = obj;
         try {
             stub = Class.forName("android.content.IClipboard$Stub");

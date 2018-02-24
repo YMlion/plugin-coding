@@ -3,13 +3,13 @@ package com.ymlion.apkload;
 import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import com.ymlion.apkload.util.HookUtil;
 
 public class New1Activity extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new1);
-        HookUtil.hookAMS();
         HookUtil.hookClipboard();
         HookUtil.hookPMS(this);
         PackageManager pm = getPackageManager();

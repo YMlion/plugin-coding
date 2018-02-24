@@ -1,9 +1,14 @@
-package com.ymlion.apkload;
+package com.ymlion.apkload.util;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
+import com.ymlion.apkload.InstrumentationProxy;
+import com.ymlion.apkload.handler.AMSHookHandler;
+import com.ymlion.apkload.handler.BinderProxyHandler;
+import com.ymlion.apkload.handler.CustomHookHandler;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -55,7 +60,7 @@ public class HookUtil {
 
             Class<?> iActivityManagerProxy = Class.forName("android.app.IActivityManager");
             Object proxy = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                    new Class[] { iActivityManagerProxy }, new CustomHookHandler(iActivityManager));
+                    new Class[] { iActivityManagerProxy }, new AMSHookHandler(iActivityManager));
 
             instanceField.set(gDefault, proxy);
         } catch (Exception e) {
@@ -82,6 +87,24 @@ public class HookUtil {
             mPM.setAccessible(true);
             mPM.set(pm, proxy);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void hookInstrumentation() {
+        try {
+            Class<?> clazz = Class.forName("android.app.ActivityThread");
+            Method ca = clazz.getDeclaredMethod("currentActivityThread");
+            ca.setAccessible(true);
+            Object currentAT = ca.invoke(null);
+
+            Field mInstrumentation = clazz.getDeclaredField("mInstrumentation");
+            mInstrumentation.setAccessible(true);
+            Instrumentation instrumentation = (Instrumentation) mInstrumentation.get(currentAT);
+
+            InstrumentationProxy proxy = new InstrumentationProxy(instrumentation);
+            mInstrumentation.set(currentAT, proxy);
         } catch (Exception e) {
             e.printStackTrace();
         }
