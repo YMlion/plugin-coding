@@ -7,6 +7,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
+ * hook AMS，在启动activity时判断是否是插件中的activity
+ *
  * Created by YMlion on 2018/2/24.
  */
 

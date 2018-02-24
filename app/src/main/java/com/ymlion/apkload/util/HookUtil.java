@@ -15,11 +15,16 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 
 /**
+ * hook utils
+ *
  * Created by YMlion on 2018/2/23.
  */
 
 public class HookUtil {
 
+    /**
+     * hook clipboard service
+     */
     public static void hookClipboard() {
         try {
             Class<?> sm = Class.forName("android.os.ServiceManager");
@@ -38,6 +43,9 @@ public class HookUtil {
         }
     }
 
+    /**
+     * hook ams, android 26 is different
+     */
     public static void hookAMS() {
         try {
             Object gDefault;
@@ -68,6 +76,11 @@ public class HookUtil {
         }
     }
 
+    /**
+     * hook pms
+     *
+     * @param context context
+     */
     public static void hookPMS(Context context) {
         try {
             Class<?> atClazz = Class.forName("android.app.ActivityThread");
@@ -78,20 +91,23 @@ public class HookUtil {
             Object ipm = spm.get(cat);
 
             Class<?> ipmClazz = Class.forName("android.content.pm.IPackageManager");
-            Object proxy = Proxy.newProxyInstance(ipmClazz.getClassLoader(),
-                    new Class[] { ipmClazz }, new CustomHookHandler(ipm));
+            Object proxy =
+                    Proxy.newProxyInstance(ipmClazz.getClassLoader(), new Class[] { ipmClazz },
+                            new CustomHookHandler(ipm));
             spm.set(cat, proxy);
 
             PackageManager pm = context.getPackageManager();
             Field mPM = pm.getClass().getDeclaredField("mPM");
             mPM.setAccessible(true);
             mPM.set(pm, proxy);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * hook instrumentation
+     */
     public static void hookInstrumentation() {
         try {
             Class<?> clazz = Class.forName("android.app.ActivityThread");
