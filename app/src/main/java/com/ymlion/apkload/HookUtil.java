@@ -1,5 +1,7 @@
 package com.ymlion.apkload;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import java.lang.reflect.Field;
@@ -56,6 +58,30 @@ public class HookUtil {
                     new Class[] { iActivityManagerProxy }, new CustomHookHandler(iActivityManager));
 
             instanceField.set(gDefault, proxy);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void hookPMS(Context context) {
+        try {
+            Class<?> atClazz = Class.forName("android.app.ActivityThread");
+            Method catMethod = atClazz.getDeclaredMethod("currentActivityThread");
+            Object cat = catMethod.invoke(null);
+            Field spm = atClazz.getDeclaredField("sPackageManager");
+            spm.setAccessible(true);
+            Object ipm = spm.get(cat);
+
+            Class<?> ipmClazz = Class.forName("android.content.pm.IPackageManager");
+            Object proxy = Proxy.newProxyInstance(ipmClazz.getClassLoader(),
+                    new Class[] { ipmClazz }, new CustomHookHandler(ipm));
+            spm.set(cat, proxy);
+
+            PackageManager pm = context.getPackageManager();
+            Field mPM = pm.getClass().getDeclaredField("mPM");
+            mPM.setAccessible(true);
+            mPM.set(pm, proxy);
+
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,5 +1,6 @@
 package com.ymlion.apkload;
 
+import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
@@ -10,5 +11,8 @@ public class New1Activity extends AppCompatActivity {
         setContentView(R.layout.activity_new1);
         HookUtil.hookAMS();
         HookUtil.hookClipboard();
+        HookUtil.hookPMS(this);
+        PackageManager pm = getPackageManager();
+        pm.getInstalledApplications(PackageManager.GET_UNINSTALLED_PACKAGES);
     }
 }

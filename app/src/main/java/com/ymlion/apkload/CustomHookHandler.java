@@ -18,7 +18,7 @@ public class CustomHookHandler implements InvocationHandler {
 
     @Override public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Log.d(TAG, "Hi, you are hooked!!!");
-        Log.d(TAG, "invoke : " + method.getName());
+        Log.d(TAG, "invoke : " + base.getClass().getName() + "." + method.getName() + "()");
         return method.invoke(base, args);
     }
 }
