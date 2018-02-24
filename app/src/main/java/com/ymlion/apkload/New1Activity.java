@@ -8,6 +8,7 @@ public class New1Activity extends AppCompatActivity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new1);
+        HookUtil.hookAMS();
         HookUtil.hookClipboard();
     }
 }

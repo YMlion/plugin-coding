@@ -1,5 +1,6 @@
 package com.ymlion.apkload;
 
+import android.os.Build;
 import android.os.IBinder;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -25,7 +26,36 @@ public class HookUtil {
             sCache.setAccessible(true);
             HashMap<String, IBinder> map = (HashMap<String, IBinder>) sCache.get(null);
             map.put("clipboard", hookedBinder);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    public static void hookAMS() {
+        try {
+            Object gDefault;
+            if (Build.VERSION.SDK_INT <= 25) {
+                Class<?> amn = Class.forName("android.app.ActivityManagerNative");
+                Field gDefaultField = amn.getDeclaredField("gDefault");
+                gDefaultField.setAccessible(true);
+                gDefault = gDefaultField.get(null);
+            } else {
+                Class<?> am = Class.forName("android.app.ActivityManager");
+                Field iams = am.getDeclaredField("IActivityManagerSingleton");
+                iams.setAccessible(true);
+                gDefault = iams.get(null);
+            }
+
+            Class<?> singleton = Class.forName("android.util.Singleton");
+            Field instanceField = singleton.getDeclaredField("mInstance");
+            instanceField.setAccessible(true);
+            Object iActivityManager = instanceField.get(gDefault);
+
+            Class<?> iActivityManagerProxy = Class.forName("android.app.IActivityManager");
+            Object proxy = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+                    new Class[] { iActivityManagerProxy }, new CustomHookHandler(iActivityManager));
+
+            instanceField.set(gDefault, proxy);
         } catch (Exception e) {
             e.printStackTrace();
         }
