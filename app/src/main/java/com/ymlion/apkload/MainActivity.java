@@ -1,6 +1,5 @@
 package com.ymlion.apkload;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -45,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         });
         mImageView = findViewById(R.id.image);
         HookUtil.hookAMS();
+        //HookUtil.hookActivityThreadHandler();
         HookUtil.hookInstrumentation();
     }
 

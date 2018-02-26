@@ -4,9 +4,11 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import com.ymlion.apkload.InstrumentationProxy;
 import com.ymlion.apkload.handler.AMSHookHandler;
+import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
 import com.ymlion.apkload.handler.BinderProxyHandler;
 import com.ymlion.apkload.handler.CustomHookHandler;
 import java.lang.reflect.Field;
@@ -121,6 +123,28 @@ public class HookUtil {
 
             InstrumentationProxy proxy = new InstrumentationProxy(instrumentation);
             mInstrumentation.set(currentAT, proxy);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * hook mH
+     */
+    public static void hookActivityThreadHandler() {
+        try {
+            Class<?> clazz = Class.forName("android.app.ActivityThread");
+            Field atField = clazz.getDeclaredField("sCurrentActivityThread");
+            atField.setAccessible(true);
+            Object at = atField.get(null);
+
+            Field handler = clazz.getDeclaredField("mH");
+            handler.setAccessible(true);
+            Handler mH = (Handler) handler.get(at);
+
+            Field callback = Handler.class.getDeclaredField("mCallback");
+            callback.setAccessible(true);
+            callback.set(mH, new ActivityThreadHandlerCallback(mH));
         } catch (Exception e) {
             e.printStackTrace();
         }
