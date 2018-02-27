@@ -52,15 +52,9 @@ public class HookUtil {
         try {
             Object gDefault;
             if (Build.VERSION.SDK_INT <= 25) {
-                Class<?> amn = Class.forName("android.app.ActivityManagerNative");
-                Field gDefaultField = amn.getDeclaredField("gDefault");
-                gDefaultField.setAccessible(true);
-                gDefault = gDefaultField.get(null);
+                gDefault = getField("android.app.ActivityManagerNative", "gDefault");
             } else {
-                Class<?> am = Class.forName("android.app.ActivityManager");
-                Field iams = am.getDeclaredField("IActivityManagerSingleton");
-                iams.setAccessible(true);
-                gDefault = iams.get(null);
+                gDefault = getField("android.app.ActivityManager", "IActivityManagerSingleton");
             }
 
             Class<?> singleton = Class.forName("android.util.Singleton");
@@ -133,20 +127,70 @@ public class HookUtil {
      */
     public static void hookActivityThreadHandler() {
         try {
-            Class<?> clazz = Class.forName("android.app.ActivityThread");
-            Field atField = clazz.getDeclaredField("sCurrentActivityThread");
-            atField.setAccessible(true);
-            Object at = atField.get(null);
-
-            Field handler = clazz.getDeclaredField("mH");
-            handler.setAccessible(true);
-            Handler mH = (Handler) handler.get(at);
-
-            Field callback = Handler.class.getDeclaredField("mCallback");
-            callback.setAccessible(true);
-            callback.set(mH, new ActivityThreadHandlerCallback(mH));
+            Object at = getField("android.app.ActivityThread", "sCurrentActivityThread");
+            Handler mH = (Handler) getField("android.app.ActivityThread", "mH", at);
+            setField(Handler.class, "mCallback", mH, new ActivityThreadHandlerCallback(mH));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    public static void hookPluginActivity() {
+        try {
+            Object atInstance = getField("android.app.ActivityThread", "sCurrentActivityThread");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Object getField(String className, String fieldName)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        return getField(className, fieldName, null);
+    }
+
+    public static Object getField(String className, String fieldName, Object obj)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Class<?> clazz = Class.forName(className);
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(obj);
+    }
+
+    public static Object getField(Class clazz, String fieldName)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        return getField(clazz, fieldName, null);
+    }
+
+    public static Object getField(Class clazz, String fieldName, Object obj)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(obj);
+    }
+
+    public static void setField(String className, String fieldName, Object value)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        setField(className, fieldName, null, value);
+    }
+
+    public static void setField(String className, String fieldName, Object obj, Object value)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Class<?> clazz = Class.forName(className);
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(obj, value);
+    }
+
+    public static void setField(Class clazz, String fieldName, Object value)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        setField(clazz, fieldName, null, value);
+    }
+
+    public static void setField(Class clazz, String fieldName, Object obj, Object value)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(obj, value);
+    }
 }
+
