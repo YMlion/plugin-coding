@@ -28,6 +28,7 @@ public class AMSHookHandler implements InvocationHandler {
             for (Object arg : args) {
                 if (arg instanceof Intent) {
                     intent = (Intent) arg;
+                    break;
                 }
             }
             if (intent != null) {

@@ -43,9 +43,13 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(MainActivity.this, New1Activity.class));
         });
         mImageView = findViewById(R.id.image);
+    }
+
+    @Override protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(newBase);
         HookUtil.hookAMS();
-        //HookUtil.hookActivityThreadHandler();
-        HookUtil.hookInstrumentation();
+        HookUtil.hookActivityThreadHandler();
+        //HookUtil.hookInstrumentation();
     }
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {

@@ -40,6 +40,7 @@ public class ActivityThreadHandlerCallback implements Handler.Callback {
             ComponentName oc = origin.getComponent();
             String targetClass = origin.getStringExtra("targetClass");
             if (targetClass != null && oc != null && oc.getClassName().endsWith("StubActivity")) {
+                Log.d(TAG, "handleLaunchActivity: " + targetClass);
                 ComponentName tc = new ComponentName(oc.getPackageName(), targetClass);
                 origin.setComponent(tc);
             }
