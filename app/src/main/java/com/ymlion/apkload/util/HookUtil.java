@@ -10,7 +10,7 @@ import com.ymlion.apkload.InstrumentationProxy;
 import com.ymlion.apkload.handler.AMSHookHandler;
 import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
 import com.ymlion.apkload.handler.BinderProxyHandler;
-import com.ymlion.apkload.handler.CustomHookHandler;
+import com.ymlion.apkload.handler.PMSHookHandler;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -95,7 +95,7 @@ public class HookUtil {
             Class<?> ipmClazz = Class.forName("android.content.pm.IPackageManager");
             Object proxy =
                     Proxy.newProxyInstance(ipmClazz.getClassLoader(), new Class[] { ipmClazz },
-                            new CustomHookHandler(ipm));
+                            new PMSHookHandler(ipm));
             spm.set(cat, proxy);
 
             PackageManager pm = context.getPackageManager();

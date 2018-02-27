@@ -47,8 +47,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
+        // 当插件activity继承自AppCompatActivity时，是还会校验该activity是否在manifest中注册，因此启动时会报错
+        // 找不到类；改为继承Activity之后则不会出现该问题。若要继承自AppcompatActivity，则需要研究
+        // Instrumentation的hook，或者hook掉pms
         HookUtil.hookAMS();
         HookUtil.hookActivityThreadHandler();
+        HookUtil.hookPMS(this);
         //HookUtil.hookInstrumentation();
     }
 
