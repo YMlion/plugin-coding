@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         // Instrumentation的hook，或者hook掉pms
         HookUtil.hookAMS();
         HookUtil.hookActivityThreadHandler();
+        //HookUtil.hookPluginActivity(this);
         HookUtil.hookPMS(this);
         //HookUtil.hookInstrumentation(this);
     }

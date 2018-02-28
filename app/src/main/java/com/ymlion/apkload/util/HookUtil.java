@@ -2,8 +2,10 @@ package com.ymlion.apkload.util;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import com.ymlion.apkload.InstrumentationProxy;
@@ -11,10 +13,14 @@ import com.ymlion.apkload.handler.AMSHookHandler;
 import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
 import com.ymlion.apkload.handler.BinderProxyHandler;
 import com.ymlion.apkload.handler.PMSHookHandler;
+import dalvik.system.DexClassLoader;
+import java.io.File;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * hook utils
@@ -135,9 +141,44 @@ public class HookUtil {
         }
     }
 
-    public static void hookPluginActivity() {
+    public static void hookPluginActivity(Context context) {
         try {
-            Object atInstance = getField("android.app.ActivityThread", "sCurrentActivityThread");
+            Class<?> atClazz = Class.forName("android.app.ActivityThread");
+            Object atInstance = getField(atClazz, "sCurrentActivityThread");
+            Map mPackages = (Map) getField(atClazz, "mPackages", atInstance);
+
+            Class<?> ppClazz = Class.forName("android.content.pm.PackageParser");
+            Object pp = ppClazz.newInstance();
+            Method parsePackage = ppClazz.getDeclaredMethod("parsePackage", File.class, int.class);
+
+            String apkPath = Environment.getExternalStorageDirectory().getAbsolutePath()
+                    + File.separator
+                    + "apkload_plugin.apk";
+            Object pkg = parsePackage.invoke(pp, new File(apkPath), 0);
+
+            Class<?> pusClazz = Class.forName("android.content.pm.PackageUserState");
+            Object pus = pusClazz.newInstance();
+
+            Method generateApplicationInfo =
+                    ppClazz.getDeclaredMethod("generateApplicationInfo", pkg.getClass(), int.class,
+                            pusClazz);
+            ApplicationInfo ai =
+                    (ApplicationInfo) generateApplicationInfo.invoke(null, pkg, 0, pus);
+
+            Class<?> compatibilityInfoClazz =
+                    Class.forName("android.content.res.CompatibilityInfo");
+            Method getPackageInfoNoCheck =
+                    atClazz.getDeclaredMethod("getPackageInfoNoCheck", ai.getClass(),
+                            compatibilityInfoClazz);
+            Object loadedApk = getPackageInfoNoCheck.invoke(atInstance, ai, null);
+
+            String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
+            DexClassLoader classLoader =
+                    new DexClassLoader(apkPath, dexDir, null, ClassLoader.getSystemClassLoader());
+            setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
+
+            WeakReference ref = new WeakReference(loadedApk);
+            mPackages.put(ai.packageName, ref);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -191,6 +232,41 @@ public class HookUtil {
         Field field = clazz.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(obj, value);
+    }
+
+    /**
+     * 待加载插件经过opt优化之后存放odex得路径
+     */
+    public static File getPluginOptDexDir(String packageName, Context context) {
+        return enforceDirExists(new File(getPluginBaseDir(packageName, context), "odex"));
+    }
+
+    /**
+     * 插件得lib库路径, 这个demo里面没有用
+     */
+    public static File getPluginLibDir(String packageName, Context context) {
+        return enforceDirExists(new File(getPluginBaseDir(packageName, context), "lib"));
+    }
+
+    private static File sBaseDir;
+
+    // 需要加载得插件得基本目录 /data/data/<package>/files/plugin/
+    private static File getPluginBaseDir(String packageName, Context context) {
+        if (sBaseDir == null) {
+            sBaseDir = context.getFileStreamPath("plugin");
+            enforceDirExists(sBaseDir);
+        }
+        return enforceDirExists(new File(sBaseDir, packageName));
+    }
+
+    private static synchronized File enforceDirExists(File sBaseDir) {
+        if (!sBaseDir.exists()) {
+            boolean ret = sBaseDir.mkdir();
+            if (!ret) {
+                throw new RuntimeException("create dir " + sBaseDir + "failed");
+            }
+        }
+        return sBaseDir;
     }
 }
 
