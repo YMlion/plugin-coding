@@ -1,5 +1,6 @@
 package com.ymlion.apkload;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -8,8 +9,6 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -34,15 +33,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(view -> {
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null)
-                    .show();
-            startActivity(new Intent(MainActivity.this, New1Activity.class));
-        });
         mImageView = findViewById(R.id.image);
+        findViewById(R.id.btn_local).setOnClickListener(
+                v -> startActivity(new Intent(MainActivity.this, New1Activity.class)));
+        findViewById(R.id.btn_sd).setOnClickListener(v -> {
+            // todo 启动非本地的activity，需要修改目标activity的resources、context等，所以现在还无法启动
+            Intent intent = new Intent();
+            ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
+                    "com.ymlion.pluginuninstalled.Plugin1Activity");
+            intent.setComponent(componentName);
+            //startActivity(intent);
+        });
     }
 
     @Override protected void attachBaseContext(Context newBase) {
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         HookUtil.hookAMS();
         HookUtil.hookActivityThreadHandler();
         HookUtil.hookPMS(this);
-        //HookUtil.hookInstrumentation();
+        //HookUtil.hookInstrumentation(this);
     }
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {

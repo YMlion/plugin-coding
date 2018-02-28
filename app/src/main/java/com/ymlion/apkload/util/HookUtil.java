@@ -104,7 +104,7 @@ public class HookUtil {
     /**
      * hook instrumentation
      */
-    public static void hookInstrumentation() {
+    public static void hookInstrumentation(Context context) {
         try {
             Class<?> clazz = Class.forName("android.app.ActivityThread");
             Method ca = clazz.getDeclaredMethod("currentActivityThread");
@@ -115,7 +115,7 @@ public class HookUtil {
             mInstrumentation.setAccessible(true);
             Instrumentation instrumentation = (Instrumentation) mInstrumentation.get(currentAT);
 
-            InstrumentationProxy proxy = new InstrumentationProxy(instrumentation);
+            InstrumentationProxy proxy = new InstrumentationProxy(instrumentation, context);
             mInstrumentation.set(currentAT, proxy);
         } catch (Exception e) {
             e.printStackTrace();
