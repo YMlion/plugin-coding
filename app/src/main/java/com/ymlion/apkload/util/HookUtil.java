@@ -135,7 +135,7 @@ public class HookUtil {
         try {
             Object at = getField("android.app.ActivityThread", "sCurrentActivityThread");
             Handler mH = (Handler) getField("android.app.ActivityThread", "mH", at);
-            setField(Handler.class, "mCallback", mH, new ActivityThreadHandlerCallback(mH));
+            setField(Handler.class, "mCallback", mH, new ActivityThreadHandlerCallback());
         } catch (Exception e) {
             e.printStackTrace();
         }

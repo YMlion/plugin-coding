@@ -14,11 +14,6 @@ import java.lang.reflect.Field;
 public class ActivityThreadHandlerCallback implements Handler.Callback {
 
     private static final String TAG = "ActivityThreadHandlerCa";
-    private Handler base;
-
-    public ActivityThreadHandlerCallback(Handler base) {
-        this.base = base;
-    }
 
     @Override public boolean handleMessage(Message msg) {
         switch (msg.what) {
@@ -27,8 +22,7 @@ public class ActivityThreadHandlerCallback implements Handler.Callback {
                 handleLaunchActivity(msg);
                 break;
         }
-        base.handleMessage(msg);
-        return true;
+        return false;
     }
 
     private void handleLaunchActivity(Message msg) {
