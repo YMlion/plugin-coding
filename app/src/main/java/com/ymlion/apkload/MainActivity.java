@@ -134,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
         String dexDir = getDir("dex", MODE_PRIVATE).getAbsolutePath();
         DexClassLoader classLoader =
                 new DexClassLoader(apkPath, dexDir, null, ClassLoader.getSystemClassLoader());
+        // 在5.0开始，PathClassLoader就可以加载外部apk、jar文件了，DexClassLoader中的第二个参数是没有用的
+        //PathClassLoader classLoader = new PathClassLoader(apkPath, ClassLoader.getSystemClassLoader());
         try {
             Class<?> clazz = classLoader.loadClass(pName + ".R$drawable");
             Field icon = clazz.getDeclaredField("ic_android");
