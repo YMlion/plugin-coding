@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         HookUtil.hookActivityThreadHandler();
         HookUtil.hookPluginActivity(this);
         HookUtil.hookPMS(this);
-        //HookUtil.hookInstrumentation(this);
+        HookUtil.hookInstrumentation(this);
     }
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {
