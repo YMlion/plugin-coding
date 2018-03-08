@@ -38,12 +38,15 @@ public class AMSHookHandler implements InvocationHandler {
                     if (targetClass.endsWith("New1Activity")) {
                         ComponentName newComponent = new ComponentName(component.getPackageName(),
                                 "com.ymlion.apkload.StubActivity");
-                        intent.setComponent(newComponent).putExtra("targetClass", targetClass);
+                        intent.setComponent(newComponent)
+                                .putExtra("targetClass", targetClass)
+                                .putExtra("targetPackage", component.getPackageName());
                     } else if (!targetClass.startsWith("com.ymlion.apkload")) {
                         ComponentName newComponent = new ComponentName("com.ymlion.apkload",
                                 "com.ymlion.apkload.StubActivity");
-                        intent.setComponent(newComponent).putExtra("targetClass", targetClass);
-                        intent.putExtra("targetPackage", component.getPackageName());
+                        intent.setComponent(newComponent)
+                                .putExtra("targetClass", targetClass)
+                                .putExtra("targetPackage", component.getPackageName());
                     }
                 }
             }

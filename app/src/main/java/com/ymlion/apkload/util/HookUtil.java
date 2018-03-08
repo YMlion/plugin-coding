@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import com.ymlion.apkload.InstrumentationProxy;
 import com.ymlion.apkload.handler.AMSHookHandler;
 import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
@@ -29,6 +30,10 @@ import java.util.Map;
  */
 
 public class HookUtil {
+
+    private static final String TAG = "HookUtil";
+
+    private static Map<String, Object> apkCache;
 
     /**
      * hook clipboard service
@@ -156,6 +161,9 @@ public class HookUtil {
                     + "apkload_plugin.apk";
             Object pkg = parsePackage.invoke(pp, new File(apkPath), 0);
 
+            //Method collectCertificates = ppClazz.getDeclaredMethod("collectCertificates", pkg.getClass(), int.class);
+            //collectCertificates.invoke(null, pkg, 0);
+
             Class<?> pusClazz = Class.forName("android.content.pm.PackageUserState");
             Object pus = pusClazz.newInstance();
 
@@ -164,21 +172,34 @@ public class HookUtil {
                             pusClazz);
             ApplicationInfo ai =
                     (ApplicationInfo) generateApplicationInfo.invoke(null, pkg, 0, pus);
+            ai.sourceDir = apkPath;
+            ai.publicSourceDir = apkPath;
 
             Class<?> compatibilityInfoClazz =
                     Class.forName("android.content.res.CompatibilityInfo");
+            Field defaultCompatibilityInfoField =
+                    compatibilityInfoClazz.getDeclaredField("DEFAULT_COMPATIBILITY_INFO");
+            defaultCompatibilityInfoField.setAccessible(true);
+            Object defaultCompatibilityInfo = defaultCompatibilityInfoField.get(null);
+
             Method getPackageInfoNoCheck =
                     atClazz.getDeclaredMethod("getPackageInfoNoCheck", ai.getClass(),
                             compatibilityInfoClazz);
-            Object loadedApk = getPackageInfoNoCheck.invoke(atInstance, ai, null);
+            Object loadedApk =
+                    getPackageInfoNoCheck.invoke(atInstance, ai, defaultCompatibilityInfo);
 
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
             DexClassLoader classLoader =
                     new DexClassLoader(apkPath, dexDir, null, ClassLoader.getSystemClassLoader());
             setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
 
+            if (apkCache == null) {
+                apkCache = new HashMap<>();
+            }
+            apkCache.put(ai.packageName, loadedApk);
             WeakReference ref = new WeakReference(loadedApk);
             mPackages.put(ai.packageName, ref);
+            Log.e(TAG, "hookPluginActivity: " + ai.packageName);
         } catch (Exception e) {
             e.printStackTrace();
         }

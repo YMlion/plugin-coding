@@ -1,6 +1,7 @@
 package com.ymlion.apkload.handler;
 
 import android.content.ComponentName;
+import android.content.pm.PackageInfo;
 import android.util.Log;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -28,10 +29,19 @@ public class PMSHookHandler implements InvocationHandler {
                     break;
                 }
             }
-            if (target != null && target.getClassName().endsWith("New1Activity")) {
-                ComponentName old = new ComponentName(target.getPackageName(),
-                        target.getPackageName() + ".StubActivity");
+            if (target != null && (target.getClassName().endsWith("New1Activity")
+                    || target.getClassName().endsWith("Plugin1Activity"))) {
+                ComponentName old =
+                        new ComponentName("com.ymlion.apkload", "com.ymlion.apkload.StubActivity");
                 args[i] = old;
+            }
+        } else if ("getPackageInfo".equals(method.getName())) {
+            for (Object arg : args) {
+                if (arg instanceof String) {
+                    if (((String) arg).endsWith("pluginuninstalled")) {
+                        return new PackageInfo();
+                    }
+                }
             }
         }
         return method.invoke(base, args);
