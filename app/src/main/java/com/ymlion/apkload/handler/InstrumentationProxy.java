@@ -5,12 +5,12 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import com.ymlion.apkload.model.AppPlugin;
 import com.ymlion.apkload.util.HookUtil;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -45,13 +45,21 @@ public class InstrumentationProxy extends Instrumentation {
                 resourcesF.setAccessible(true);
                 resourcesF.set(context, resources);
 
-                ActivityInfo ai =
+                String name = activity.getClass().getName();
+                AppPlugin appPlugin = AppPlugin.mPluginMap.get(context.getPackageName());
+                for (ActivityInfo info : appPlugin.mActivityInfos) {
+                    if (name.equals(info.name)) {
+                        HookUtil.setField(Activity.class, "mActivityInfo", activity, info);
+                        break;
+                    }
+                }
+                /*ActivityInfo ai =
                         (ActivityInfo) HookUtil.getField(Activity.class, "mActivityInfo", activity);
-                Object loadApk = HookUtil.apkCache.get(context.getPackageName());
+                Object loadApk = AppPlugin.apkCache.get(context.getPackageName());
                 ApplicationInfo targetAi =
                         (ApplicationInfo) HookUtil.getField(loadApk.getClass(), "mApplicationInfo",
                                 loadApk);
-                ai.applicationInfo = targetAi;
+                ai.applicationInfo = targetAi;*/
             } catch (Exception e) {
                 e.printStackTrace();
             }

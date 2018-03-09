@@ -1,8 +1,10 @@
 package com.ymlion.apkload.handler;
 
 import android.content.ComponentName;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.util.Log;
+import com.ymlion.apkload.model.AppPlugin;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
@@ -29,11 +31,25 @@ public class PMSHookHandler implements InvocationHandler {
                     break;
                 }
             }
-            if (target != null && (target.getClassName().endsWith("New1Activity")
-                    || target.getPackageName().endsWith("pluginuninstalled"))) {
-                ComponentName old =
-                        new ComponentName("com.ymlion.apkload", "com.ymlion.apkload.StubActivity");
-                args[i] = old;
+            if (target != null) {
+                if (target.getClassName().endsWith("New1Activity")) {
+                    ComponentName old = new ComponentName("com.ymlion.apkload",
+                            "com.ymlion.apkload.StubActivity");
+                    args[i] = old;
+                } else if (target.getPackageName().endsWith("pluginuninstalled")) {
+                    AppPlugin appPlugin = AppPlugin.mPluginMap.get(target.getPackageName());
+                    if (appPlugin != null) {
+                        for (ActivityInfo activityInfo : appPlugin.mActivityInfos) {
+                            if (target.getClassName().equals(activityInfo.name)) {
+                                Log.d(TAG, "get the activity info " + activityInfo.name);
+                                return activityInfo;
+                            }
+                        }
+                    }
+                    ComponentName old = new ComponentName("com.ymlion.apkload",
+                            "com.ymlion.apkload.StubActivity");
+                    args[i] = old;
+                }
             }
         } else if ("getPackageInfo".equals(method.getName())) {
             for (Object arg : args) {

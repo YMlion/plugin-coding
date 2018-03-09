@@ -14,6 +14,7 @@ import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
 import com.ymlion.apkload.handler.BinderProxyHandler;
 import com.ymlion.apkload.handler.InstrumentationProxy;
 import com.ymlion.apkload.handler.PMSHookHandler;
+import com.ymlion.apkload.model.AppPlugin;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -31,8 +32,6 @@ import java.util.Map;
 public class HookUtil {
 
     private static final String TAG = "HookUtil";
-
-    public static Map<String, Object> apkCache;
 
     /**
      * hook clipboard service
@@ -159,7 +158,6 @@ public class HookUtil {
                     + File.separator
                     + "apkload_plugin.apk";
             Object pkg = parsePackage.invoke(pp, new File(apkPath), 0);
-            // todo 在这里根据解析之后的Package，分别保存已经解析好的四大组件及其他信息
 
             //Method collectCertificates = ppClazz.getDeclaredMethod("collectCertificates", pkg.getClass(), int.class);
             //collectCertificates.invoke(null, pkg, 0);
@@ -193,10 +191,13 @@ public class HookUtil {
                     ClassLoader.getSystemClassLoader());
             setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
 
-            if (apkCache == null) {
-                apkCache = new HashMap<>();
+            if (AppPlugin.apkCache == null) {
+                AppPlugin.apkCache = new HashMap<>();
             }
-            apkCache.put(ai.packageName, loadedApk);
+            AppPlugin.apkCache.put(ai.packageName, loadedApk);
+            // todo 在这里根据解析之后的Package，分别保存已经解析好的四大组件及其他信息
+            AppPlugin.parsePackage(ai.packageName, pkg);
+
             WeakReference ref = new WeakReference(loadedApk);
             mPackages.put(ai.packageName, ref);
             Log.e(TAG, "hookPluginActivity: " + ai.packageName);
