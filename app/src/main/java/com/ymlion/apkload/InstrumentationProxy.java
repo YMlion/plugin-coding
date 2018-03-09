@@ -4,11 +4,14 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import com.ymlion.apkload.util.HookUtil;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -31,16 +34,24 @@ public class InstrumentationProxy extends Instrumentation {
     @Override public void callActivityOnCreate(Activity activity, Bundle icicle) {
         if (activity.getPackageName().endsWith("pluginuninstalled")) {
             try {
-                Log.e("TAG", "callActivityOnCreate: ");
                 Context context = activity.getBaseContext();
+                Log.e("TAG",
+                        "callActivityOnCreate: " + context.getClassLoader().getClass().getName());
                 String apkPath = Environment.getExternalStorageDirectory().getAbsolutePath()
                         + File.separator
                         + "apkload_plugin.apk";
                 Resources resources = getPluginResources(oldContext, apkPath);
-                Field resourcesF =
-                        Class.forName("android.app.ContextImpl").getDeclaredField("mResources");
+                Field resourcesF = context.getClass().getDeclaredField("mResources");
                 resourcesF.setAccessible(true);
                 resourcesF.set(context, resources);
+
+                ActivityInfo ai =
+                        (ActivityInfo) HookUtil.getField(Activity.class, "mActivityInfo", activity);
+                Object loadApk = HookUtil.apkCache.get(context.getPackageName());
+                ApplicationInfo targetAi =
+                        (ApplicationInfo) HookUtil.getField(loadApk.getClass(), "mApplicationInfo",
+                                loadApk);
+                ai.applicationInfo = targetAi;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -54,9 +65,7 @@ public class InstrumentationProxy extends Instrumentation {
             Method addAsset = am.getClass().getDeclaredMethod("addAssetPath", String.class);
             addAsset.invoke(am, apkPath);
             Resources res = context.getResources();
-            Resources resources =
-                    new Resources(am, res.getDisplayMetrics(), res.getConfiguration());
-            return resources;
+            return new Resources(am, res.getDisplayMetrics(), res.getConfiguration());
         } catch (Exception e) {
             e.printStackTrace();
         }

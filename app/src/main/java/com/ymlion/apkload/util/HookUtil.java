@@ -14,7 +14,6 @@ import com.ymlion.apkload.handler.AMSHookHandler;
 import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
 import com.ymlion.apkload.handler.BinderProxyHandler;
 import com.ymlion.apkload.handler.PMSHookHandler;
-import dalvik.system.DexClassLoader;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -33,7 +32,7 @@ public class HookUtil {
 
     private static final String TAG = "HookUtil";
 
-    private static Map<String, Object> apkCache;
+    public static Map<String, Object> apkCache;
 
     /**
      * hook clipboard service
@@ -189,8 +188,8 @@ public class HookUtil {
                     getPackageInfoNoCheck.invoke(atInstance, ai, defaultCompatibilityInfo);
 
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
-            DexClassLoader classLoader =
-                    new DexClassLoader(apkPath, dexDir, null, ClassLoader.getSystemClassLoader());
+            PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
+                    ClassLoader.getSystemClassLoader());
             setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
 
             if (apkCache == null) {
