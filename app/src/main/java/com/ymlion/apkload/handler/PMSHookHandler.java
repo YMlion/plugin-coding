@@ -30,7 +30,7 @@ public class PMSHookHandler implements InvocationHandler {
                 }
             }
             if (target != null && (target.getClassName().endsWith("New1Activity")
-                    || target.getClassName().endsWith("Plugin1Activity"))) {
+                    || target.getPackageName().endsWith("pluginuninstalled"))) {
                 ComponentName old =
                         new ComponentName("com.ymlion.apkload", "com.ymlion.apkload.StubActivity");
                 args[i] = old;

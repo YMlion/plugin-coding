@@ -9,10 +9,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
-import com.ymlion.apkload.InstrumentationProxy;
 import com.ymlion.apkload.handler.AMSHookHandler;
 import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
 import com.ymlion.apkload.handler.BinderProxyHandler;
+import com.ymlion.apkload.handler.InstrumentationProxy;
 import com.ymlion.apkload.handler.PMSHookHandler;
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -159,6 +159,7 @@ public class HookUtil {
                     + File.separator
                     + "apkload_plugin.apk";
             Object pkg = parsePackage.invoke(pp, new File(apkPath), 0);
+            // todo 在这里根据解析之后的Package，分别保存已经解析好的四大组件及其他信息
 
             //Method collectCertificates = ppClazz.getDeclaredMethod("collectCertificates", pkg.getClass(), int.class);
             //collectCertificates.invoke(null, pkg, 0);

@@ -36,11 +36,19 @@ public class MainActivity extends AppCompatActivity {
         mImageView = findViewById(R.id.image);
         findViewById(R.id.btn_local).setOnClickListener(
                 v -> startActivity(new Intent(MainActivity.this, New1Activity.class)));
-        findViewById(R.id.btn_sd).setOnClickListener(v -> {
+        findViewById(R.id.btn_sd1).setOnClickListener(v -> {
             // todo 启动非本地的activity，需要修改目标activity的resources、context等，所以现在还无法启动
             Intent intent = new Intent();
             ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
                     "com.ymlion.pluginuninstalled.Plugin1Activity");
+            intent.setComponent(componentName);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btn_sd2).setOnClickListener(v -> {
+            Intent intent = new Intent();
+            ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
+                    "com.ymlion.pluginuninstalled.Plugin2Activity");
             intent.setComponent(componentName);
             startActivity(intent);
         });
