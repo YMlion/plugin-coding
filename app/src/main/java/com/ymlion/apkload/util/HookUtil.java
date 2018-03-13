@@ -190,7 +190,7 @@ public class HookUtil {
 
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
             PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
-                    ClassLoader.getSystemClassLoader());
+                    context.getClassLoader());
             setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
 
             if (AppPlugin.apkCache == null) {
