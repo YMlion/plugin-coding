@@ -8,8 +8,6 @@ public class Plugin2Activity extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_plugin1);
-        TextView tv = findViewById(R.id.textView);
-        tv.setText("Hello, this is plugin 2 activity.");
+        setContentView(R.layout.activity_plugin2);
     }
 }
