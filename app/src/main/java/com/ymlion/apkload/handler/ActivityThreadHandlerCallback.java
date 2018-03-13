@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import com.ymlion.apkload.model.AppPlugin;
 import java.lang.reflect.Field;
 
 /**
@@ -32,7 +33,6 @@ public class ActivityThreadHandlerCallback implements Handler.Callback {
             Field activityInfoF = activityClientRecord.getClass().getDeclaredField("activityInfo");
             activityInfoF.setAccessible(true);
             ActivityInfo activityInfo = (ActivityInfo) activityInfoF.get(activityClientRecord);
-            Log.e(TAG, "handleLaunchActivity: " + activityInfo.applicationInfo.packageName);
 
             Field intentField = activityClientRecord.getClass().getDeclaredField("intent");
             intentField.setAccessible(true);
@@ -41,6 +41,17 @@ public class ActivityThreadHandlerCallback implements Handler.Callback {
             String targetClass = origin.getStringExtra("targetClass");
             if (targetClass != null && oc != null && oc.getClassName().endsWith("StubActivity")) {
                 String targetPkg = origin.getStringExtra("targetPackage");
+                AppPlugin appPlugin = AppPlugin.mPluginMap.get(targetPkg);
+                if (appPlugin != null) {
+                    Log.d(TAG, "handleLaunchActivity: "
+                            + activityInfo.applicationInfo.packageName
+                            + " ; theme is "
+                            + activityInfo.theme
+                            + "; after is "
+                            + appPlugin.mApplicationInfo.theme);
+                    activityInfo.theme = appPlugin.mApplicationInfo.theme;
+                }
+
                 Log.d(TAG, "handleLaunchActivity: " + targetPkg + " : " + targetClass);
                 ComponentName tc = new ComponentName(targetPkg, targetClass);
                 origin.setComponent(tc);

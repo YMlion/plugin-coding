@@ -1,9 +1,13 @@
 package com.ymlion.apkload.model;
 
+import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ServiceInfo;
+import android.content.res.Resources;
 import android.util.Log;
+import com.ymlion.apkload.AppContext;
 import com.ymlion.apkload.util.HookUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,24 +23,60 @@ public class AppPlugin {
     public static Map<String, Object> apkCache;
     public static Map<String, AppPlugin> mPluginMap;
 
+    private Context mBase;
+    public ApplicationInfo mApplicationInfo;
+    private Resources mResources;
+    private ClassLoader mClassLoader;
+    private Context mPluginContext;
+
     public List<ActivityInfo> mActivityInfos;
     public List<ServiceInfo> mServiceInfos;
     public List<ActivityInfo> mReceiverInfos;
     public List<ProviderInfo> mProviderInfos;
 
     public AppPlugin() {
+        mBase = AppContext.getInstance().getBaseContext();
         mActivityInfos = new ArrayList<>();
         mServiceInfos = new ArrayList<>();
         mReceiverInfos = new ArrayList<>();
         mProviderInfos = new ArrayList<>();
+        mPluginContext = new PluginContext(this);
     }
 
-    public static void parsePackage(String packageName, Object pkg) {
+    public void setResources(Resources resources) {
+        mResources = resources;
+    }
+
+    public Resources getResources() {
+        return mResources;
+    }
+
+    public void setClassLoader(ClassLoader classLoader) {
+        mClassLoader = classLoader;
+    }
+
+    public ClassLoader getClassLoader() {
+        return mClassLoader;
+    }
+
+    public Context getBase() {
+        return mBase;
+    }
+
+    public Context getPluginContext() {
+        return mPluginContext;
+    }
+
+    public static AppPlugin parsePackage(String packageName, Object pkg) {
         if (pkg == null) {
-            return;
+            return null;
         }
         try {
             AppPlugin appPlugin = new AppPlugin();
+            ApplicationInfo applicationInfo =
+                    (ApplicationInfo) HookUtil.getField(pkg.getClass(), "applicationInfo", pkg);
+            appPlugin.mApplicationInfo = applicationInfo;
+
             List<?> activities = (List<?>) HookUtil.getField(pkg.getClass(), "activities", pkg);
             for (Object activity : activities) {
                 ActivityInfo info =
@@ -63,8 +103,11 @@ public class AppPlugin {
                 mPluginMap = new HashMap<>();
             }
             mPluginMap.put(packageName, appPlugin);
+            return appPlugin;
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 }

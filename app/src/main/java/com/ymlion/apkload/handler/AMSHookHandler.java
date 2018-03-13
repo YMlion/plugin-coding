@@ -44,6 +44,8 @@ public class AMSHookHandler implements InvocationHandler {
                     } else if (!targetClass.startsWith("com.ymlion.apkload")) {
                         ComponentName newComponent = new ComponentName("com.ymlion.apkload",
                                 "com.ymlion.apkload.StubActivity");
+                        Log.d(TAG, "start target package is " + component.getPackageName());
+                        // TODO: 2018/3/13  target package is com.ymlion.pluginuninstalled, but component.getPackageName() is com.ymlion.apkload in plugin startActivity
                         intent.setComponent(newComponent)
                                 .putExtra("targetClass", targetClass)
                                 .putExtra("targetPackage", component.getPackageName());

@@ -4,6 +4,8 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -195,8 +197,11 @@ public class HookUtil {
                 AppPlugin.apkCache = new HashMap<>();
             }
             AppPlugin.apkCache.put(ai.packageName, loadedApk);
-            // todo 在这里根据解析之后的Package，分别保存已经解析好的四大组件及其他信息
-            AppPlugin.parsePackage(ai.packageName, pkg);
+            AppPlugin appPlugin = AppPlugin.parsePackage(ai.packageName, pkg);
+            if (appPlugin != null) {
+                appPlugin.setResources(getPluginResources(context, apkPath));
+                appPlugin.setClassLoader(classLoader);
+            }
 
             WeakReference ref = new WeakReference(loadedApk);
             mPackages.put(ai.packageName, ref);
@@ -256,39 +261,18 @@ public class HookUtil {
         field.set(obj, value);
     }
 
-    /**
-     * 待加载插件经过opt优化之后存放odex得路径
-     */
-    public static File getPluginOptDexDir(String packageName, Context context) {
-        return enforceDirExists(new File(getPluginBaseDir(packageName, context), "odex"));
-    }
-
-    /**
-     * 插件得lib库路径, 这个demo里面没有用
-     */
-    public static File getPluginLibDir(String packageName, Context context) {
-        return enforceDirExists(new File(getPluginBaseDir(packageName, context), "lib"));
-    }
-
-    private static File sBaseDir;
-
-    // 需要加载得插件得基本目录 /data/data/<package>/files/plugin/
-    private static File getPluginBaseDir(String packageName, Context context) {
-        if (sBaseDir == null) {
-            sBaseDir = context.getFileStreamPath("plugin");
-            enforceDirExists(sBaseDir);
+    public static Resources getPluginResources(Context context, String apkPath) {
+        try {
+            AssetManager am = AssetManager.class.newInstance();
+            Method addAsset = am.getClass().getDeclaredMethod("addAssetPath", String.class);
+            addAsset.invoke(am, apkPath);
+            Resources res = context.getResources();
+            return new Resources(am, res.getDisplayMetrics(), res.getConfiguration());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return enforceDirExists(new File(sBaseDir, packageName));
+        return null;
     }
 
-    private static synchronized File enforceDirExists(File sBaseDir) {
-        if (!sBaseDir.exists()) {
-            boolean ret = sBaseDir.mkdir();
-            if (!ret) {
-                throw new RuntimeException("create dir " + sBaseDir + "failed");
-            }
-        }
-        return sBaseDir;
-    }
 }
 
