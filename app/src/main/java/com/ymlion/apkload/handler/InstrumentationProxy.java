@@ -2,6 +2,7 @@ package com.ymlion.apkload.handler;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import com.ymlion.apkload.model.AppPlugin;
 import com.ymlion.apkload.util.HookUtil;
 
@@ -37,6 +39,8 @@ public class InstrumentationProxy extends Instrumentation {
                 AppPlugin appPlugin = AppPlugin.mPluginMap.get(context.getPackageName());
                 Resources resources = appPlugin.getResources();
                 HookUtil.setField(context.getClass(), "mResources", context, resources);
+                HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
+                        appPlugin.getPluginContext());
                 // TODO: 2018/3/13 After set the mBase, should override the getPackageName in plugin activity
                 HookUtil.setField(ContextWrapper.class, "mBase", activity,
                         appPlugin.getPluginContext());
@@ -48,6 +52,8 @@ public class InstrumentationProxy extends Instrumentation {
                         break;
                     }
                 }
+                Log.d(TAG, "callActivityOnCreate: theme is " + HookUtil.getField(
+                        ContextThemeWrapper.class, "mThemeResource", activity));
                 /*ActivityInfo ai =
                         (ActivityInfo) HookUtil.getField(Activity.class, "mActivityInfo", activity);
                 Object loadApk = AppPlugin.apkCache.get(context.getPackageName());
@@ -64,20 +70,39 @@ public class InstrumentationProxy extends Instrumentation {
 
     @Override public Activity newActivity(ClassLoader cl, String className, Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        Log.e("InstrumentationProxy", "newActivity: " + className);
+        Log.e("InstrumentationProxy",
+                "newActivity: " + className + "; classLoader : " + cl.getClass().getName());
+        Activity activity = null;
+        ComponentName component = intent.getComponent();
+        AppPlugin appPlugin = null;
+        if (component != null) {
+            appPlugin = AppPlugin.mPluginMap.get(component.getPackageName());
+        }
         try {
-            return proxy.newActivity(cl, className, intent);
+            activity = proxy.newActivity(cl, className, intent);
         } catch (Exception e) {
             e.printStackTrace();
-            String targetPkg = intent.getComponent().getPackageName();
-            AppPlugin appPlugin = AppPlugin.mPluginMap.get(targetPkg);
             if (appPlugin != null) {
-                Activity activity =
-                        proxy.newActivity(appPlugin.getClassLoader(), className, intent);
+                activity = proxy.newActivity(appPlugin.getClassLoader(), className, intent);
                 activity.setIntent(intent);
-                return activity;
             }
-            return null;
         }
+        if (appPlugin != null) {
+            HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
+                    appPlugin.getResources());
+        }
+        return activity;
+    }
+
+    @Override public Context getContext() {
+        return proxy.getContext();
+    }
+
+    @Override public Context getTargetContext() {
+        return proxy.getTargetContext();
+    }
+
+    @Override public ComponentName getComponentName() {
+        return proxy.getComponentName();
     }
 }

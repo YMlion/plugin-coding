@@ -49,7 +49,15 @@ public class ActivityThreadHandlerCallback implements Handler.Callback {
                             + activityInfo.theme
                             + "; after is "
                             + appPlugin.mApplicationInfo.theme);
-                    activityInfo.theme = appPlugin.mApplicationInfo.theme;
+                    for (ActivityInfo ai : appPlugin.mActivityInfos) {
+                        if (targetClass.equals(ai.name)) {
+                            activityInfo.theme = ai.theme;
+                            break;
+                        }
+                    }
+                    if (activityInfo.theme <= 0) {
+                        activityInfo.theme = appPlugin.mApplicationInfo.theme;
+                    }
                 }
 
                 Log.d(TAG, "handleLaunchActivity: " + targetPkg + " : " + targetClass);

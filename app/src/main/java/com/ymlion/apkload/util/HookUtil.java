@@ -261,6 +261,17 @@ public class HookUtil {
         field.set(obj, value);
     }
 
+    public static void setFieldWithoutException(Class clazz, String fieldName, Object obj,
+            Object value) {
+        try {
+            Field field = clazz.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(obj, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static Resources getPluginResources(Context context, String apkPath) {
         try {
             AssetManager am = AssetManager.class.newInstance();
