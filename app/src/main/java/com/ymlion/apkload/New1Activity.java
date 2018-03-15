@@ -1,5 +1,6 @@
 package com.ymlion.apkload;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import com.ymlion.apkload.util.HookUtil;
@@ -13,5 +14,8 @@ public class New1Activity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new1);
         HookUtil.hookClipboard();
+        sendBroadcast(
+                new Intent("com.ymlion.pluginuninstalled.PLUGIN_RECEIVER_1").putExtra("content",
+                        "hello, this is in host!!!"));
     }
 }

@@ -24,6 +24,12 @@
         </activity>
         <activity android:name=".Plugin3Activity">
         </activity>
+
+        <receiver android:name=".Plugin1Receiver">
+            <intent-filter>
+                <action android:name="com.ymlion.pluginuninstalled.PLUGIN_RECEIVER_1"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

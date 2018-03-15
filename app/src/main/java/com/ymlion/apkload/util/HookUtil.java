@@ -197,11 +197,8 @@ public class HookUtil {
                 AppPlugin.apkCache = new HashMap<>();
             }
             AppPlugin.apkCache.put(ai.packageName, loadedApk);
-            AppPlugin appPlugin = AppPlugin.parsePackage(ai.packageName, pkg);
-            if (appPlugin != null) {
-                appPlugin.setResources(getPluginResources(context, apkPath));
-                appPlugin.setClassLoader(classLoader);
-            }
+            AppPlugin appPlugin = new AppPlugin(classLoader, getPluginResources(context, apkPath));
+            appPlugin.parsePackage(ai.packageName, pkg);
 
             WeakReference ref = new WeakReference(loadedApk);
             mPackages.put(ai.packageName, ref);

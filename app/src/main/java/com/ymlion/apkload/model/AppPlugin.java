@@ -1,6 +1,8 @@
 package com.ymlion.apkload.model;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ProviderInfo;
@@ -34,13 +36,15 @@ public class AppPlugin {
     public List<ActivityInfo> mReceiverInfos;
     public List<ProviderInfo> mProviderInfos;
 
-    public AppPlugin() {
+    public AppPlugin(ClassLoader classLoader, Resources resources) {
         mBase = AppContext.getInstance().getBaseContext();
         mActivityInfos = new ArrayList<>();
         mServiceInfos = new ArrayList<>();
         mReceiverInfos = new ArrayList<>();
         mProviderInfos = new ArrayList<>();
         mPluginContext = new PluginContext(this);
+        this.mClassLoader = classLoader;
+        this.mResources = resources;
     }
 
     public void setResources(Resources resources) {
@@ -67,47 +71,56 @@ public class AppPlugin {
         return mPluginContext;
     }
 
-    public static AppPlugin parsePackage(String packageName, Object pkg) {
+    public void parsePackage(String packageName, Object pkg) {
         if (pkg == null) {
-            return null;
+            return;
         }
         try {
-            AppPlugin appPlugin = new AppPlugin();
-            ApplicationInfo applicationInfo =
+            mApplicationInfo =
                     (ApplicationInfo) HookUtil.getField(pkg.getClass(), "applicationInfo", pkg);
-            appPlugin.mApplicationInfo = applicationInfo;
 
             List<?> activities = (List<?>) HookUtil.getField(pkg.getClass(), "activities", pkg);
             for (Object activity : activities) {
                 ActivityInfo info =
                         (ActivityInfo) HookUtil.getField(activity.getClass(), "info", activity);
-                appPlugin.mActivityInfos.add(info);
+                mActivityInfos.add(info);
                 Log.d(TAG, "parsePackage: " + info.name);
             }
             List<?> services = (List<?>) HookUtil.getField(pkg.getClass(), "services", pkg);
             for (Object service : services) {
-                appPlugin.mServiceInfos.add(
+                mServiceInfos.add(
                         (ServiceInfo) HookUtil.getField(service.getClass(), "info", service));
             }
             List<?> providers = (List<?>) HookUtil.getField(pkg.getClass(), "providers", pkg);
             for (Object provider : providers) {
-                appPlugin.mProviderInfos.add(
+                mProviderInfos.add(
                         (ProviderInfo) HookUtil.getField(provider.getClass(), "info", provider));
             }
             List<?> receivers = (List<?>) HookUtil.getField(pkg.getClass(), "receivers", pkg);
             for (Object receiver : receivers) {
-                appPlugin.mReceiverInfos.add(
-                        (ActivityInfo) HookUtil.getField(receiver.getClass(), "info", receiver));
+                ActivityInfo info =
+                        (ActivityInfo) HookUtil.getField(receiver.getClass(), "info", receiver);
+                mReceiverInfos.add(info);
+                try {
+                    BroadcastReceiver br = BroadcastReceiver.class.cast(
+                            mClassLoader.loadClass(info.name).newInstance());
+                    ArrayList<? extends IntentFilter> intentFilters =
+                            (ArrayList<? extends IntentFilter>) HookUtil.getField(
+                                    "android.content.pm.PackageParser$Component", "intents",
+                                    receiver);
+                    for (IntentFilter filter : intentFilters) {
+                        mBase.registerReceiver(br, filter);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             if (mPluginMap == null) {
                 mPluginMap = new HashMap<>();
             }
-            mPluginMap.put(packageName, appPlugin);
-            return appPlugin;
+            mPluginMap.put(packageName, this);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return null;
     }
 }
