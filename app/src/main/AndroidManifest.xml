@@ -25,6 +25,10 @@
         </activity>
         <activity android:name=".StubActivity">
         </activity>
+
+        <service
+            android:name=".model.ProxyService">
+        </service>
     </application>
 
 </manifest>
