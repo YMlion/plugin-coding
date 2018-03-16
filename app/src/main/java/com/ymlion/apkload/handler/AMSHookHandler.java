@@ -1,8 +1,10 @@
 package com.ymlion.apkload.handler;
 
+import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.util.Log;
+import com.ymlion.apkload.AppContext;
 import com.ymlion.apkload.model.ProxyService;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -23,6 +25,7 @@ public class AMSHookHandler implements InvocationHandler {
     }
 
     @Override public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        Log.d(TAG, "invoke AMS method : " + method.getName());
         if ("startActivity".equals(method.getName())) {// activity
             Intent intent = null;
             for (Object arg : args) {
@@ -64,11 +67,50 @@ public class AMSHookHandler implements InvocationHandler {
                     String targetClass = cn.getClassName();
                     String targetPkg = cn.getPackageName();
                     if (!targetClass.startsWith("com.ymlion.apkload")) {
-                        intent.setComponent(new ComponentName("com.ymlion.apkload",
-                                ProxyService.class.getName()));
+                        intent.setComponent(new ComponentName("com.ymlion.apkload", ProxyService.class.getName()));
                         intent.putExtra("targetClass", targetClass);
                         intent.putExtra("targetPackage", targetPkg);
                         intent.putExtra(ProxyService.COMMAND, ProxyService.COMMAND_START);
+                    }
+                }
+            }
+        } else if ("stopServiceToken".equals(method.getName())) {// stop service
+            ComponentName cn = null;
+            for (Object arg : args) {
+                if (arg instanceof ComponentName) {
+                    cn = (ComponentName) arg;
+                    break;
+                }
+            }
+            if (cn != null && !cn.getClassName().startsWith("com.ymlion.apkload")) {
+                Service service = ProxyService.cacheServices.remove(cn.getClassName());
+                if (service != null) {
+                    service.onDestroy();
+                }
+                if (ProxyService.cacheServices.size() <= 0) {
+                    AppContext.getInstance()
+                            .stopService(new Intent(AppContext.getInstance(), ProxyService.class));
+                }
+            }
+        } else if ("stopService".equals(method.getName())) {// stop service
+            Intent intent = null;
+            for (Object arg : args) {
+                if (arg instanceof Intent) {
+                    intent = (Intent) arg;
+                    break;
+                }
+            }
+            if (intent != null) {
+                ComponentName cn = intent.getComponent();
+                if (cn != null && !cn.getClassName().startsWith("com.ymlion.apkload")) {
+                    Service service = ProxyService.cacheServices.remove(cn.getClassName());
+                    if (service != null) {
+                        service.onDestroy();
+                    }
+                    if (ProxyService.cacheServices.size() <= 0) {
+                        AppContext.getInstance()
+                                .stopService(
+                                        new Intent(AppContext.getInstance(), ProxyService.class));
                     }
                 }
             }

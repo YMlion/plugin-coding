@@ -83,6 +83,26 @@ public class HookUtil {
         }
     }
 
+    public static Object getAMS() {
+        try {
+            Object gDefault;
+            if (Build.VERSION.SDK_INT <= 25) {
+                gDefault = getField("android.app.ActivityManagerNative", "gDefault");
+            } else {
+                gDefault = getField("android.app.ActivityManager", "IActivityManagerSingleton");
+            }
+
+            Class<?> singleton = Class.forName("android.util.Singleton");
+            Field instanceField = singleton.getDeclaredField("mInstance");
+            instanceField.setAccessible(true);
+            return instanceField.get(gDefault);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     /**
      * hook pms
      *

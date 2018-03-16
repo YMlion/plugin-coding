@@ -30,6 +30,10 @@
                 <action android:name="com.ymlion.pluginuninstalled.PLUGIN_RECEIVER_1"/>
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".Plugin1Service">
+        </service>
     </application>
 
 </manifest>

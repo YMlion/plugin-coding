@@ -52,6 +52,13 @@ public class MainActivity extends AppCompatActivity {
             intent.setComponent(componentName);
             startActivity(intent);
         });
+        findViewById(R.id.btn_service1).setOnClickListener(v -> {
+            Intent intent = new Intent();
+            ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
+                    "com.ymlion.pluginuninstalled.Plugin1Service");
+            intent.setComponent(componentName);
+            startService(intent);
+        });
     }
 
     @Override protected void attachBaseContext(Context newBase) {
