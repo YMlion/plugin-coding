@@ -12,6 +12,7 @@ import android.view.View;
 public class Plugin1Activity extends Activity {
 
     private static final String TAG = "Plugin1Activity";
+    BroadcastReceiver receiver;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,12 +21,17 @@ public class Plugin1Activity extends Activity {
                 v -> startActivity(new Intent(Plugin1Activity.this, Plugin2Activity.class)));
         findViewById(R.id.open_p3).setOnClickListener(
                 v -> startActivity(new Intent(Plugin1Activity.this, Plugin3Activity.class)));
-        BroadcastReceiver receiver = new BroadcastReceiver() {
+        receiver = new BroadcastReceiver() {
             @Override public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "哇，收到了！");
                 Log.d(TAG, intent.getStringExtra("content"));
             }
         };
         registerReceiver(receiver, new IntentFilter("com.ymlion.pluginuninstalled.PLUGIN_ACTIVITY_1"));
+    }
+
+    @Override protected void onDestroy() {
+        unregisterReceiver(receiver);
+        super.onDestroy();
     }
 }
