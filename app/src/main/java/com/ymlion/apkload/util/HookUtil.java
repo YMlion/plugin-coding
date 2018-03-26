@@ -213,8 +213,9 @@ public class HookUtil {
             ai.publicSourceDir = apkPath;
 
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
-            PluginClassLoader classLoader =
-                    new PluginClassLoader(apkPath, dexDir, null, context.getClassLoader());
+            // TODO: 2018/3/26 想了好久，context.getClassLoader().getParent()就可以加载AppcompatActivity
+            PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
+                    context.getClassLoader().getParent());
             setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
 
             if (AppPlugin.apkCache == null) {
