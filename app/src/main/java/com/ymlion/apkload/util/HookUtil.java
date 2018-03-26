@@ -1,5 +1,6 @@
 package com.ymlion.apkload.util;
 
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -146,7 +147,7 @@ public class HookUtil {
             mInstrumentation.setAccessible(true);
             Instrumentation instrumentation = (Instrumentation) mInstrumentation.get(currentAT);
 
-            InstrumentationProxy proxy = new InstrumentationProxy(instrumentation, context);
+            InstrumentationProxy proxy = new InstrumentationProxy(instrumentation);
             mInstrumentation.set(currentAT, proxy);
         } catch (Exception e) {
             e.printStackTrace();
@@ -182,6 +183,7 @@ public class HookUtil {
             Object pkg = parsePackage.invoke(pp, new File(apkPath), 0);
 
             //Method collectCertificates = ppClazz.getDeclaredMethod("collectCertificates", pkg.getClass(), int.class);
+            //collectCertificates.setAccessible(true);
             //collectCertificates.invoke(null, pkg, 0);
 
             Class<?> pusClazz = Class.forName("android.content.pm.PackageUserState");
@@ -192,8 +194,6 @@ public class HookUtil {
                             pusClazz);
             ApplicationInfo ai =
                     (ApplicationInfo) generateApplicationInfo.invoke(null, pkg, 0, pus);
-            ai.sourceDir = apkPath;
-            ai.publicSourceDir = apkPath;
 
             Class<?> compatibilityInfoClazz =
                     Class.forName("android.content.res.CompatibilityInfo");
@@ -208,9 +208,13 @@ public class HookUtil {
             Object loadedApk =
                     getPackageInfoNoCheck.invoke(atInstance, ai, defaultCompatibilityInfo);
 
+            apkPath = FileUtil.getPluginFile(context, apkPath).getAbsolutePath();
+            ai.sourceDir = apkPath;
+            ai.publicSourceDir = apkPath;
+
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
-            PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
-                    context.getClassLoader());
+            PluginClassLoader classLoader =
+                    new PluginClassLoader(apkPath, dexDir, null, context.getClassLoader());
             setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
 
             if (AppPlugin.apkCache == null) {
@@ -219,6 +223,14 @@ public class HookUtil {
             AppPlugin.apkCache.put(ai.packageName, loadedApk);
             AppPlugin appPlugin = new AppPlugin(classLoader, getPluginResources(context, apkPath));
             appPlugin.parsePackage(ai.packageName, pkg);
+
+            Instrumentation mInstrumentation =
+                    (Instrumentation) getField(atClazz, "mInstrumentation", atInstance);
+            Application app = mInstrumentation.newApplication(classLoader,
+                    ai.className == null ? "android.app.Application" : ai.className,
+                    appPlugin.getPluginContext());
+            mInstrumentation.callApplicationOnCreate(app);
+            appPlugin.setApplication(app);
 
             WeakReference ref = new WeakReference(loadedApk);
             mPackages.put(ai.packageName, ref);
@@ -301,6 +313,5 @@ public class HookUtil {
         }
         return null;
     }
-
 }
 

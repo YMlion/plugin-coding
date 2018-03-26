@@ -1,5 +1,6 @@
 package com.ymlion.apkload.model;
 
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -35,6 +36,7 @@ public class AppPlugin {
     public List<ServiceInfo> mServiceInfos;
     public List<ActivityInfo> mReceiverInfos;
     public List<ProviderInfo> mProviderInfos;
+    private Application mApplication;
 
     public AppPlugin(ClassLoader classLoader, Resources resources) {
         mBase = AppContext.getInstance().getBaseContext();
@@ -122,5 +124,13 @@ public class AppPlugin {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void setApplication(Application application) {
+        mApplication = application;
+    }
+
+    public Application getApplication() {
+        return mApplication;
     }
 }

@@ -1,6 +1,8 @@
 package com.ymlion.apkload.model;
 
+import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.util.Log;
 
@@ -23,6 +25,7 @@ public class PluginContext extends ContextWrapper {
     }
 
     @Override public ClassLoader getClassLoader() {
+        Log.d(TAG, "getClassLoader");
         return mAppPlugin.getClassLoader();
     }
 
@@ -35,5 +38,10 @@ public class PluginContext extends ContextWrapper {
 
     @Override public String getPackageName() {
         return mAppPlugin.mApplicationInfo.packageName;
+    }
+
+    @Override public Context createConfigurationContext(Configuration overrideConfiguration) {
+        Log.d(TAG, "createConfigurationContext");
+        return super.createConfigurationContext(overrideConfiguration);
     }
 }

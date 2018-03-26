@@ -19,8 +19,7 @@
         <activity android:name=".Plugin1Activity">
         </activity>
         <activity
-            android:name=".Plugin2Activity"
-            android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar">
+            android:name=".Plugin2Activity">
         </activity>
         <activity android:name=".Plugin3Activity">
         </activity>

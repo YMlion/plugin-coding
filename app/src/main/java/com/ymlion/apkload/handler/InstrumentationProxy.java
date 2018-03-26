@@ -8,6 +8,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -23,11 +24,9 @@ public class InstrumentationProxy extends Instrumentation {
     private static final String TAG = "InstrumentationProxy";
 
     private Instrumentation proxy;
-    private Context oldContext;
 
-    public InstrumentationProxy(Instrumentation proxy, Context context) {
+    public InstrumentationProxy(Instrumentation proxy) {
         this.proxy = proxy;
-        oldContext = context;
     }
 
     @Override public void callActivityOnCreate(Activity activity, Bundle icicle) {
@@ -38,12 +37,17 @@ public class InstrumentationProxy extends Instrumentation {
                         "callActivityOnCreate: " + context.getClassLoader().getClass().getName());
                 AppPlugin appPlugin = AppPlugin.mPluginMap.get(context.getPackageName());
                 Resources resources = appPlugin.getResources();
+                // android21 no effect
                 HookUtil.setField(context.getClass(), "mResources", context, resources);
-                HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
-                        appPlugin.getPluginContext());
+                if (Build.VERSION.SDK_INT <= 19) {
+                    HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
+                            appPlugin.getPluginContext());
+                }
                 // TODO: 2018/3/13 After set the mBase, should override the getPackageName in plugin activity
                 HookUtil.setField(ContextWrapper.class, "mBase", activity,
                         appPlugin.getPluginContext());
+                HookUtil.setField(Activity.class, "mApplication", activity,
+                        appPlugin.getApplication());
 
                 String name = activity.getClass().getName();
                 for (ActivityInfo info : appPlugin.mActivityInfos) {
@@ -53,7 +57,7 @@ public class InstrumentationProxy extends Instrumentation {
                     }
                 }
                 Log.d(TAG, "callActivityOnCreate: theme is " + HookUtil.getField(
-                        ContextThemeWrapper.class, "mThemeResource", activity));
+                        ContextThemeWrapper.class, "mTheme", activity));
                 /*ActivityInfo ai =
                         (ActivityInfo) HookUtil.getField(Activity.class, "mActivityInfo", activity);
                 Object loadApk = AppPlugin.apkCache.get(context.getPackageName());
@@ -87,7 +91,7 @@ public class InstrumentationProxy extends Instrumentation {
                 activity.setIntent(intent);
             }
         }
-        if (appPlugin != null) {
+        if (appPlugin != null) {//android21 no effect
             HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
                     appPlugin.getResources());
         }
