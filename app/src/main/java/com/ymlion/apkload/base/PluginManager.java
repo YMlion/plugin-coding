@@ -128,8 +128,10 @@ public class PluginManager {
 
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
             // TODO: 2018/3/26 想了好久，context.getClassLoader().getParent()就可以加载AppcompatActivity
+            //PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
+            //        context.getClassLoader().getParent());
             PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
-                    context.getClassLoader().getParent());
+                    ClassLoader.getSystemClassLoader());
             HookUtil.setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
             Log.d(TAG, "hookPluginActivity: "
                     + context.getClassLoader().toString()

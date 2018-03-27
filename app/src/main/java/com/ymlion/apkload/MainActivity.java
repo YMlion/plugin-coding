@@ -72,13 +72,18 @@ public class MainActivity extends AppCompatActivity {
             startService(intent);
         });
         // 加载插件
-        findViewById(R.id.btn_install).setOnClickListener(v -> PluginManager.getInstance()
-                .loadPlugin(this, Environment.getExternalStorageDirectory().getAbsolutePath()
-                        + File.separator
-                        + "apkload_plugin.apk"));
+        findViewById(R.id.btn_install).setOnClickListener(v -> {
+            PluginManager.getInstance()
+                    .loadPlugin(this, Environment.getExternalStorageDirectory().getAbsolutePath()
+                            + File.separator
+                            + "apkload_plugin.apk");
+            Toast.makeText(this, "has installed the plugin.", Toast.LENGTH_SHORT).show();
+        });
         // 移除所有插件
-        findViewById(R.id.btn_remove_all).setOnClickListener(
-                v -> PluginManager.getInstance().removeAllPlugin(this));
+        findViewById(R.id.btn_remove_all).setOnClickListener(v -> {
+            PluginManager.getInstance().removeAllPlugin(this);
+            Toast.makeText(this, "has removed all plugin.", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override protected void attachBaseContext(Context newBase) {
