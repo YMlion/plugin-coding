@@ -1,4 +1,4 @@
-package com.ymlion.apkload.model;
+package com.ymlion.apkload.base;
 
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -15,7 +15,7 @@ public class PluginContext extends ContextWrapper {
     private AppPlugin mAppPlugin;
 
     public PluginContext(AppPlugin appPlugin) {
-        super(appPlugin.getBase());
+        super(PluginManager.getInstance().getBase());
         mAppPlugin = appPlugin;
     }
 

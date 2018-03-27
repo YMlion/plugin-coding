@@ -7,12 +7,12 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
-import com.ymlion.apkload.model.AppPlugin;
+import com.ymlion.apkload.base.AppPlugin;
+import com.ymlion.apkload.base.PluginManager;
 import com.ymlion.apkload.util.HookUtil;
 
 /**
@@ -35,10 +35,11 @@ public class InstrumentationProxy extends Instrumentation {
                 Context context = activity.getBaseContext();
                 Log.e("TAG",
                         "callActivityOnCreate: " + context.getClassLoader().getClass().getName());
-                AppPlugin appPlugin = AppPlugin.mPluginMap.get(context.getPackageName());
-                Resources resources = appPlugin.getResources();
+                AppPlugin appPlugin =
+                        PluginManager.getInstance().getCachePlugin(context.getPackageName());
+                //Resources resources = appPlugin.getResources();
                 // android21 no effect
-                HookUtil.setField(context.getClass(), "mResources", context, resources);
+                //HookUtil.setField(ContextThemeWrapper.class, "mResources", context, resources);
                 if (Build.VERSION.SDK_INT <= 19) {
                     HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
                             appPlugin.getPluginContext());
@@ -80,7 +81,7 @@ public class InstrumentationProxy extends Instrumentation {
         ComponentName component = intent.getComponent();
         AppPlugin appPlugin = null;
         if (component != null) {
-            appPlugin = AppPlugin.mPluginMap.get(component.getPackageName());
+            appPlugin = PluginManager.getInstance().getCachePlugin(component.getPackageName());
         }
         try {
             activity = proxy.newActivity(cl, className, intent);

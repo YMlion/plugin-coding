@@ -4,7 +4,8 @@ import android.content.ComponentName;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.util.Log;
-import com.ymlion.apkload.model.AppPlugin;
+import com.ymlion.apkload.base.AppPlugin;
+import com.ymlion.apkload.base.PluginManager;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
@@ -37,7 +38,8 @@ public class PMSHookHandler implements InvocationHandler {
                             "com.ymlion.apkload.StubActivity");
                     args[i] = old;
                 } else if (target.getPackageName().endsWith("pluginuninstalled")) {
-                    AppPlugin appPlugin = AppPlugin.mPluginMap.get(target.getPackageName());
+                    AppPlugin appPlugin =
+                            PluginManager.getInstance().getCachePlugin(target.getPackageName());
                     if (appPlugin != null) {
                         for (ActivityInfo activityInfo : appPlugin.mActivityInfos) {
                             if (target.getClassName().equals(activityInfo.name)) {

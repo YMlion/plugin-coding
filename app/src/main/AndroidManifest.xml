@@ -27,7 +27,7 @@
         </activity>
 
         <service
-            android:name=".model.ProxyService">
+            android:name=".handler.ProxyService">
         </service>
     </application>
 

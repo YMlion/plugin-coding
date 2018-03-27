@@ -14,6 +14,11 @@ public class Plugin1Activity extends Activity {
     private static final String TAG = "Plugin1Activity";
     BroadcastReceiver receiver;
 
+    @Override protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(newBase);
+        Log.d(TAG, "attachBaseContext: " + getClassLoader() + "; parent : " + getClassLoader().getParent());
+    }
+
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_plugin1);

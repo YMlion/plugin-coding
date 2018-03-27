@@ -15,7 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.Toast;
-import com.ymlion.apkload.util.HookUtil;
+import com.ymlion.apkload.base.PluginManager;
 import dalvik.system.DexClassLoader;
 import dalvik.system.PathClassLoader;
 import java.io.File;
@@ -31,13 +31,16 @@ public class MainActivity extends AppCompatActivity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initView();
+    }
+
+    private void initView() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         mImageView = findViewById(R.id.image);
-        findViewById(R.id.btn_local).setOnClickListener(
+        findViewById(R.id.btn_local).setOnClickListener(// 本地activity
                 v -> startActivity(new Intent(MainActivity.this, New1Activity.class)));
-        findViewById(R.id.btn_sd1).setOnClickListener(v -> {
-            // todo 启动非本地的activity，需要修改目标activity的resources、context等，所以现在还无法启动
+        findViewById(R.id.btn_sd1).setOnClickListener(v -> { // plugin activity 1
             Intent intent = new Intent();
             ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
                     "com.ymlion.pluginuninstalled.Plugin1Activity");
@@ -45,47 +48,43 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        findViewById(R.id.btn_sd2).setOnClickListener(v -> {
+        findViewById(R.id.btn_sd2).setOnClickListener(v -> { // plugin activity 2
             Intent intent = new Intent();
             ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
                     "com.ymlion.pluginuninstalled.Plugin2Activity");
             intent.setComponent(componentName);
             startActivity(intent);
         });
-        findViewById(R.id.btn_service1).setOnClickListener(v -> {
+        findViewById(R.id.btn_service1).setOnClickListener(v -> { // plugin service
             Intent intent = new Intent();
             ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
                     "com.ymlion.pluginuninstalled.Plugin1Service");
             intent.setComponent(componentName);
             startService(intent);
         });
+        // 加载插件
+        findViewById(R.id.btn_install).setOnClickListener(v -> PluginManager.getInstance()
+                .loadPlugin(this, Environment.getExternalStorageDirectory().getAbsolutePath()
+                        + File.separator
+                        + "apkload_plugin.apk"));
+        // 移除所有插件
+        findViewById(R.id.btn_remove_all).setOnClickListener(
+                v -> PluginManager.getInstance().removeAllPlugin(this));
     }
 
     @Override protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
-        // 当插件activity继承自AppCompatActivity时，是还会校验该activity是否在manifest中注册，因此启动时会报错
-        // 找不到类；改为继承Activity之后则不会出现该问题。若要继承自AppcompatActivity，则需要研究
-        // Instrumentation的hook，或者hook掉pms
-        HookUtil.hookAMS();
-        HookUtil.hookActivityThreadHandler();
-        HookUtil.hookPluginActivity(this);
-        HookUtil.hookPMS(this);
-        HookUtil.hookInstrumentation(this);
+        PluginManager.getInstance().init(this);
     }
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_green) {
             Toast.makeText(this, "load green icon", Toast.LENGTH_SHORT).show();
             loadPluginInstalled();

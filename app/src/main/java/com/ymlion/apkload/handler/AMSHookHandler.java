@@ -5,7 +5,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.util.Log;
 import com.ymlion.apkload.AppContext;
-import com.ymlion.apkload.model.ProxyService;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 

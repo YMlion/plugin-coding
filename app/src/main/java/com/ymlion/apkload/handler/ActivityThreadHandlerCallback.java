@@ -6,7 +6,8 @@ import android.content.pm.ActivityInfo;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import com.ymlion.apkload.model.AppPlugin;
+import com.ymlion.apkload.base.AppPlugin;
+import com.ymlion.apkload.base.PluginManager;
 import java.lang.reflect.Field;
 
 /**
@@ -41,7 +42,7 @@ public class ActivityThreadHandlerCallback implements Handler.Callback {
             String targetClass = origin.getStringExtra("targetClass");
             if (targetClass != null && oc != null && oc.getClassName().endsWith("StubActivity")) {
                 String targetPkg = origin.getStringExtra("targetPackage");
-                AppPlugin appPlugin = AppPlugin.mPluginMap.get(targetPkg);
+                AppPlugin appPlugin = PluginManager.getInstance().getCachePlugin(targetPkg);
                 if (appPlugin != null) {
                     Log.d(TAG, "handleLaunchActivity: "
                             + activityInfo.applicationInfo.packageName

@@ -1,4 +1,4 @@
-package com.ymlion.apkload.model;
+package com.ymlion.apkload.handler;
 
 import android.app.Application;
 import android.app.Service;
@@ -11,6 +11,8 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 import com.ymlion.apkload.AppContext;
+import com.ymlion.apkload.base.AppPlugin;
+import com.ymlion.apkload.base.PluginManager;
 import com.ymlion.apkload.util.HookUtil;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -41,7 +43,7 @@ public class ProxyService extends Service {
             return super.onStartCommand(intent, flags, startId);
         }
         Log.d(TAG, "Proxy Service onStartCommand: " + targetClass);
-        AppPlugin appPlugin = AppPlugin.mPluginMap.get(targetPkg);
+        AppPlugin appPlugin = PluginManager.getInstance().getCachePlugin(targetPkg);
         switch (intent.getIntExtra(COMMAND, 1)) {
             case COMMAND_START:
                 try {
@@ -57,7 +59,8 @@ public class ProxyService extends Service {
                         Object activityThread = HookUtil.getField(at, "sCurrentActivityThread");
                         IInterface appThread =
                                 (IInterface) HookUtil.getField(at, "mAppThread", activityThread);
-                        attach.invoke(service, appPlugin.getBase(), activityThread, targetClass,
+                        attach.invoke(service, PluginManager.getInstance().getBase(),
+                                activityThread, targetClass,
                                 appThread.asBinder(), AppContext.getInstance(), HookUtil.getAMS());
                         service.onCreate();
                         intent.setComponent(new ComponentName(targetPkg, targetClass));

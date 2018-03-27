@@ -1,4 +1,4 @@
-package com.ymlion.apkload.model;
+package com.ymlion.apkload.base;
 
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -10,12 +10,9 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.util.Log;
-import com.ymlion.apkload.AppContext;
 import com.ymlion.apkload.util.HookUtil;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by YMlion on 2018/3/9.
@@ -23,10 +20,7 @@ import java.util.Map;
 
 public class AppPlugin {
     private static final String TAG = "AppPlugin";
-    public static Map<String, Object> apkCache;
-    public static Map<String, AppPlugin> mPluginMap;
 
-    private Context mBase;
     public ApplicationInfo mApplicationInfo;
     private Resources mResources;
     private ClassLoader mClassLoader;
@@ -39,7 +33,6 @@ public class AppPlugin {
     private Application mApplication;
 
     public AppPlugin(ClassLoader classLoader, Resources resources) {
-        mBase = AppContext.getInstance().getBaseContext();
         mActivityInfos = new ArrayList<>();
         mServiceInfos = new ArrayList<>();
         mReceiverInfos = new ArrayList<>();
@@ -63,10 +56,6 @@ public class AppPlugin {
 
     public ClassLoader getClassLoader() {
         return mClassLoader;
-    }
-
-    public Context getBase() {
-        return mBase;
     }
 
     public Context getPluginContext() {
@@ -111,16 +100,13 @@ public class AppPlugin {
                                     "android.content.pm.PackageParser$Component", "intents",
                                     receiver);
                     for (IntentFilter filter : intentFilters) {
-                        mBase.registerReceiver(br, filter);
+                        PluginManager.getInstance().registerReceiver(br, filter);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            if (mPluginMap == null) {
-                mPluginMap = new HashMap<>();
-            }
-            mPluginMap.put(packageName, this);
+            PluginManager.getInstance().cachePlugin(packageName, this);
         } catch (Exception e) {
             e.printStackTrace();
         }

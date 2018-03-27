@@ -1,30 +1,22 @@
 package com.ymlion.apkload.util;
 
-import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.util.Log;
 import com.ymlion.apkload.handler.AMSHookHandler;
 import com.ymlion.apkload.handler.ActivityThreadHandlerCallback;
 import com.ymlion.apkload.handler.BinderProxyHandler;
 import com.ymlion.apkload.handler.InstrumentationProxy;
 import com.ymlion.apkload.handler.PMSHookHandler;
-import com.ymlion.apkload.model.AppPlugin;
-import java.io.File;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * hook utils
@@ -162,80 +154,6 @@ public class HookUtil {
             Object at = getField("android.app.ActivityThread", "sCurrentActivityThread");
             Handler mH = (Handler) getField("android.app.ActivityThread", "mH", at);
             setField(Handler.class, "mCallback", mH, new ActivityThreadHandlerCallback());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void hookPluginActivity(Context context) {
-        try {
-            Class<?> atClazz = Class.forName("android.app.ActivityThread");
-            Object atInstance = getField(atClazz, "sCurrentActivityThread");
-            Map mPackages = (Map) getField(atClazz, "mPackages", atInstance);
-
-            Class<?> ppClazz = Class.forName("android.content.pm.PackageParser");
-            Object pp = ppClazz.newInstance();
-            Method parsePackage = ppClazz.getDeclaredMethod("parsePackage", File.class, int.class);
-
-            String apkPath = Environment.getExternalStorageDirectory().getAbsolutePath()
-                    + File.separator
-                    + "apkload_plugin.apk";
-            Object pkg = parsePackage.invoke(pp, new File(apkPath), 0);
-
-            //Method collectCertificates = ppClazz.getDeclaredMethod("collectCertificates", pkg.getClass(), int.class);
-            //collectCertificates.setAccessible(true);
-            //collectCertificates.invoke(null, pkg, 0);
-
-            Class<?> pusClazz = Class.forName("android.content.pm.PackageUserState");
-            Object pus = pusClazz.newInstance();
-
-            Method generateApplicationInfo =
-                    ppClazz.getDeclaredMethod("generateApplicationInfo", pkg.getClass(), int.class,
-                            pusClazz);
-            ApplicationInfo ai =
-                    (ApplicationInfo) generateApplicationInfo.invoke(null, pkg, 0, pus);
-
-            Class<?> compatibilityInfoClazz =
-                    Class.forName("android.content.res.CompatibilityInfo");
-            Field defaultCompatibilityInfoField =
-                    compatibilityInfoClazz.getDeclaredField("DEFAULT_COMPATIBILITY_INFO");
-            defaultCompatibilityInfoField.setAccessible(true);
-            Object defaultCompatibilityInfo = defaultCompatibilityInfoField.get(null);
-
-            Method getPackageInfoNoCheck =
-                    atClazz.getDeclaredMethod("getPackageInfoNoCheck", ai.getClass(),
-                            compatibilityInfoClazz);
-            Object loadedApk =
-                    getPackageInfoNoCheck.invoke(atInstance, ai, defaultCompatibilityInfo);
-
-            apkPath = FileUtil.getPluginFile(context, apkPath).getAbsolutePath();
-            ai.sourceDir = apkPath;
-            ai.publicSourceDir = apkPath;
-
-            String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
-            // TODO: 2018/3/26 想了好久，context.getClassLoader().getParent()就可以加载AppcompatActivity
-            PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
-                    context.getClassLoader().getParent());
-            setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
-
-            if (AppPlugin.apkCache == null) {
-                AppPlugin.apkCache = new HashMap<>();
-            }
-            AppPlugin.apkCache.put(ai.packageName, loadedApk);
-            AppPlugin appPlugin = new AppPlugin(classLoader, getPluginResources(context, apkPath));
-            appPlugin.parsePackage(ai.packageName, pkg);
-
-            Instrumentation mInstrumentation =
-                    (Instrumentation) getField(atClazz, "mInstrumentation", atInstance);
-            Application app = mInstrumentation.newApplication(classLoader,
-                    ai.className == null ? "android.app.Application" : ai.className,
-                    appPlugin.getPluginContext());
-            mInstrumentation.callApplicationOnCreate(app);
-            appPlugin.setApplication(app);
-
-            WeakReference ref = new WeakReference(loadedApk);
-            mPackages.put(ai.packageName, ref);
-            Log.e(TAG, "hookPluginActivity: " + ai.packageName);
         } catch (Exception e) {
             e.printStackTrace();
         }
