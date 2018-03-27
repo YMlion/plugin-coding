@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,13 +34,13 @@ public class InstrumentationProxy extends Instrumentation {
         if (activity.getPackageName().endsWith("pluginuninstalled")) {
             try {
                 Context context = activity.getBaseContext();
-                Log.e("TAG",
-                        "callActivityOnCreate: " + context.getClassLoader().getClass().getName());
+                Log.e("TAG", "base context is " + context.getClass().getName());
                 AppPlugin appPlugin =
                         PluginManager.getInstance().getCachePlugin(context.getPackageName());
-                //Resources resources = appPlugin.getResources();
+                Resources resources = appPlugin.getResources();
                 // android21 no effect
-                //HookUtil.setField(ContextThemeWrapper.class, "mResources", context, resources);
+                HookUtil.setFieldWithoutException(context.getClass(), "mResources", context,
+                        resources);
                 if (Build.VERSION.SDK_INT <= 19) {
                     HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
                             appPlugin.getPluginContext());
