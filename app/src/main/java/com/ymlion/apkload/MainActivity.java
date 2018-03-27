@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.Toast;
 import com.ymlion.apkload.base.PluginManager;
+import com.ymlion.apkload.util.FileUtil;
 import dalvik.system.DexClassLoader;
 import dalvik.system.PathClassLoader;
 import java.io.File;
@@ -152,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
         String apkPath = Environment.getExternalStorageDirectory().getAbsolutePath()
                 + File.separator
                 + "apkload_plugin.apk";
+        apkPath = FileUtil.getPluginFile(this, apkPath).getAbsolutePath();
         PackageManager pm = getPackageManager();
         PackageInfo packageInfo = pm.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES);
         if (packageInfo == null) {
