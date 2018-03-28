@@ -10,6 +10,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import com.ymlion.apkload.base.AppPlugin;
@@ -34,7 +35,6 @@ public class InstrumentationProxy extends Instrumentation {
         if (activity.getPackageName().endsWith("pluginuninstalled")) {
             try {
                 Context context = activity.getBaseContext();
-                Log.e("TAG", "base context is " + context.getClass().getName());
                 AppPlugin appPlugin =
                         PluginManager.getInstance().getCachePlugin(context.getPackageName());
                 Resources resources = appPlugin.getResources();
@@ -48,8 +48,8 @@ public class InstrumentationProxy extends Instrumentation {
                 // TODO: 2018/3/13 After set the mBase, should override the getPackageName in plugin activity
                 HookUtil.setField(ContextWrapper.class, "mBase", activity,
                         appPlugin.getPluginContext());
-                HookUtil.setField(Activity.class, "mApplication", activity,
-                        appPlugin.getApplication());
+                //HookUtil.setField(Activity.class, "mApplication", activity,
+                //        appPlugin.getApplication());
 
                 String name = activity.getClass().getName();
                 for (ActivityInfo info : appPlugin.mActivityInfos) {
@@ -67,6 +67,21 @@ public class InstrumentationProxy extends Instrumentation {
                         (ApplicationInfo) HookUtil.getField(loadApk.getClass(), "mApplicationInfo",
                                 loadApk);
                 ai.applicationInfo = targetAi;*/
+                ClassLoader c1 = AppCompatActivity.class.getClassLoader();
+                Log.d(TAG, "appcompat activity class loader is " + c1);
+                Log.d(TAG, "activity father is " + activity.getClass().getSuperclass().getName());
+                Log.d(TAG, "activity father loader is " + activity.getClass()
+                        .getSuperclass()
+                        .getClassLoader());
+                ClassLoader c2 = activity.getClass().getSuperclass().getClassLoader();
+                Log.d(TAG, "activity father loader's parent is " + c2.getParent());
+                if (c2.getParent() != null) {
+                    Log.d(TAG, "Appcompat is appcompat? " + (AppCompatActivity.class
+                            == activity.getClass().getSuperclass()));
+                    Log.d(TAG, "Appcompat is appcompat? " + (c2.loadClass(
+                            "android.support.v7.app.AppCompatActivity") == activity.getClass()
+                            .getSuperclass()));
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

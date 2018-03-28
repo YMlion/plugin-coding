@@ -17,7 +17,7 @@ public class FileUtil {
     private static final String TAG = "FileUtil";
 
     public static File getPluginFile(Context context, String apkPath) {
-        File filesDir = context.getFilesDir();
+        File filesDir = getPluginsDir(context);
         String apkName = apkPath.substring(apkPath.lastIndexOf(File.separator));
         File plugin = new File(filesDir, apkName);
         if (!plugin.exists()) {
@@ -25,6 +25,10 @@ public class FileUtil {
             copyFile(apkPath, plugin.getAbsolutePath());
         }
         return plugin;
+    }
+
+    public static File getPluginsDir(Context context) {
+        return context.getDir("plugins", Context.MODE_PRIVATE);
     }
 
     private static void copyFile(String srcPath, String desPath) {

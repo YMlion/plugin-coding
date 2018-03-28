@@ -1,6 +1,5 @@
 package com.ymlion.apkload.base;
 
-import android.app.Application;
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -56,7 +55,7 @@ public class PluginManager {
     }
 
     private void preLoad(Context context) {
-        File[] files = context.getFilesDir().listFiles();
+        File[] files = FileUtil.getPluginsDir(context).listFiles();
         for (File file : files) {
             String path = file.getAbsolutePath();
             if (path.endsWith(".apk") || path.endsWith(".jar")) {
@@ -71,7 +70,7 @@ public class PluginManager {
     }
 
     public void removeAllPlugin(Context context) {
-        File[] files = context.getFilesDir().listFiles();
+        File[] files = FileUtil.getPluginsDir(context).listFiles();
         for (File file : files) {
             if (file.getName().endsWith(".apk") || file.getName().endsWith(".jar")) {
                 file.delete();
@@ -131,7 +130,7 @@ public class PluginManager {
             //PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
             //        context.getClassLoader().getParent());
             PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
-                    ClassLoader.getSystemClassLoader());
+                    context.getClassLoader().getParent());
             HookUtil.setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
             Log.d(TAG, "hookPluginActivity: "
                     + context.getClassLoader().toString()
@@ -145,11 +144,15 @@ public class PluginManager {
 
             Instrumentation mInstrumentation =
                     (Instrumentation) HookUtil.getField(atClazz, "mInstrumentation", atInstance);
-            Application app = mInstrumentation.newApplication(classLoader,
+            Method makeApplication = loadedApk.getClass()
+                    .getDeclaredMethod("makeApplication", boolean.class, Instrumentation.class);
+            makeApplication.setAccessible(true);
+            makeApplication.invoke(loadedApk, false, mInstrumentation);
+            /*Application app = mInstrumentation.newApplication(classLoader,
                     ai.className == null ? "android.app.Application" : ai.className,
                     appPlugin.getPluginContext());
             mInstrumentation.callApplicationOnCreate(app);
-            appPlugin.setApplication(app);
+            appPlugin.setApplication(app);*/
 
             WeakReference ref = new WeakReference(loadedApk);
             mPackages.put(ai.packageName, ref);
