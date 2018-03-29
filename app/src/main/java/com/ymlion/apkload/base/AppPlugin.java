@@ -31,6 +31,7 @@ public class AppPlugin {
     public List<ActivityInfo> mReceiverInfos;
     public List<ProviderInfo> mProviderInfos;
     private Application mApplication;
+    private Object mPackage;
 
     public AppPlugin(ClassLoader classLoader, Resources resources) {
         mActivityInfos = new ArrayList<>();
@@ -62,11 +63,20 @@ public class AppPlugin {
         return mPluginContext;
     }
 
+    public Object getPackage() {
+        return mPackage;
+    }
+
+    public ApplicationInfo getApplicationInfo() {
+        return mApplicationInfo;
+    }
+
     public void parsePackage(String packageName, Object pkg) {
         if (pkg == null) {
             return;
         }
         try {
+            mPackage = pkg;
             mApplicationInfo =
                     (ApplicationInfo) HookUtil.getField(pkg.getClass(), "applicationInfo", pkg);
 

@@ -10,7 +10,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import com.ymlion.apkload.base.AppPlugin;
@@ -58,8 +57,6 @@ public class InstrumentationProxy extends Instrumentation {
                         break;
                     }
                 }
-                Log.d(TAG, "callActivityOnCreate: theme is " + HookUtil.getField(
-                        ContextThemeWrapper.class, "mTheme", activity));
                 /*ActivityInfo ai =
                         (ActivityInfo) HookUtil.getField(Activity.class, "mActivityInfo", activity);
                 Object loadApk = AppPlugin.apkCache.get(context.getPackageName());
@@ -67,21 +64,6 @@ public class InstrumentationProxy extends Instrumentation {
                         (ApplicationInfo) HookUtil.getField(loadApk.getClass(), "mApplicationInfo",
                                 loadApk);
                 ai.applicationInfo = targetAi;*/
-                ClassLoader c1 = AppCompatActivity.class.getClassLoader();
-                Log.d(TAG, "appcompat activity class loader is " + c1);
-                Log.d(TAG, "activity father is " + activity.getClass().getSuperclass().getName());
-                Log.d(TAG, "activity father loader is " + activity.getClass()
-                        .getSuperclass()
-                        .getClassLoader());
-                ClassLoader c2 = activity.getClass().getSuperclass().getClassLoader();
-                Log.d(TAG, "activity father loader's parent is " + c2.getParent());
-                if (c2.getParent() != null) {
-                    Log.d(TAG, "Appcompat is appcompat? " + (AppCompatActivity.class
-                            == activity.getClass().getSuperclass()));
-                    Log.d(TAG, "Appcompat is appcompat? " + (c2.loadClass(
-                            "android.support.v7.app.AppCompatActivity") == activity.getClass()
-                            .getSuperclass()));
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
