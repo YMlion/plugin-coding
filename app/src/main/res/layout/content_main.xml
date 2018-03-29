@@ -83,4 +83,14 @@
         app:layout_constraintStart_toEndOf="@+id/btn_install"
         app:layout_constraintTop_toBottomOf="@+id/btn_service1"/>
 
+    <Button
+        android:id="@+id/btn_open_plugin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="32dp"
+        android:text="open"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_install"/>
+
 </android.support.constraint.ConstraintLayout>

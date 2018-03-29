@@ -85,6 +85,15 @@ public class MainActivity extends AppCompatActivity {
             PluginManager.getInstance().removeAllPlugin(this);
             Toast.makeText(this, "has removed all plugin.", Toast.LENGTH_SHORT).show();
         });
+
+        findViewById(R.id.btn_open_plugin).setOnClickListener(v -> {
+            Intent intent = new Intent();
+            ComponentName componentName = new ComponentName("com.ymlion.pluginuninstalled",
+                    "com.ymlion.pluginuninstalled.MainActivity");
+            intent.setComponent(componentName);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        });
     }
 
     @Override protected void attachBaseContext(Context newBase) {

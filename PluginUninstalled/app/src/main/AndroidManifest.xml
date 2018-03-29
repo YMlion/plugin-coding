@@ -19,7 +19,8 @@
         <activity android:name=".Plugin1Activity">
         </activity>
         <activity
-            android:name=".Plugin2Activity">
+            android:name=".Plugin2Activity"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity android:name=".Plugin3Activity">
         </activity>

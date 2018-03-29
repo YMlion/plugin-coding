@@ -15,6 +15,7 @@ import android.view.ContextThemeWrapper;
 import com.ymlion.apkload.base.AppPlugin;
 import com.ymlion.apkload.base.PluginManager;
 import com.ymlion.apkload.util.HookUtil;
+import java.lang.reflect.Method;
 
 /**
  * Instrumentation代理类，目前只区判断是否是插桩activity
@@ -40,6 +41,17 @@ public class InstrumentationProxy extends Instrumentation {
                 // android21 no effect
                 HookUtil.setFieldWithoutException(context.getClass(), "mResources", context,
                         resources);
+                /*HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
+                        resources);
+                try {
+                    Method selectDefaultTheme = Resources.class.getDeclaredMethod("selectDefaultTheme", int.class, int.class);
+                    int theme = (int) selectDefaultTheme.invoke(null, 0, Build.VERSION.SDK_INT);
+                    Resources.Theme pluginTheme = resources.newTheme();
+                    pluginTheme.applyStyle(theme, false);
+                    HookUtil.setField(ContextThemeWrapper.class, "mTheme", activity, pluginTheme);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }*/
                 if (Build.VERSION.SDK_INT <= 19) {
                     HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
                             appPlugin.getPluginContext());
@@ -57,13 +69,6 @@ public class InstrumentationProxy extends Instrumentation {
                         break;
                     }
                 }
-                /*ActivityInfo ai =
-                        (ActivityInfo) HookUtil.getField(Activity.class, "mActivityInfo", activity);
-                Object loadApk = AppPlugin.apkCache.get(context.getPackageName());
-                ApplicationInfo targetAi =
-                        (ApplicationInfo) HookUtil.getField(loadApk.getClass(), "mApplicationInfo",
-                                loadApk);
-                ai.applicationInfo = targetAi;*/
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -93,6 +98,17 @@ public class InstrumentationProxy extends Instrumentation {
         if (appPlugin != null) {//android21 no effect
             HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
                     appPlugin.getResources());
+            try {
+                Method selectDefaultTheme =
+                        Resources.class.getDeclaredMethod("selectDefaultTheme", int.class,
+                                int.class);
+                int theme = (int) selectDefaultTheme.invoke(null, 0, Build.VERSION.SDK_INT);
+                Resources.Theme pluginTheme = appPlugin.getResources().newTheme();
+                pluginTheme.applyStyle(theme, false);
+                HookUtil.setField(ContextThemeWrapper.class, "mTheme", activity, pluginTheme);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return activity;
     }
