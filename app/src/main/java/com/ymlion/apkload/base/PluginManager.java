@@ -11,7 +11,6 @@ import com.ymlion.apkload.AppContext;
 import com.ymlion.apkload.util.FileUtil;
 import com.ymlion.apkload.util.HookUtil;
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -88,7 +87,6 @@ public class PluginManager {
         try {
             Class<?> atClazz = Class.forName("android.app.ActivityThread");
             Object atInstance = HookUtil.getField(atClazz, "sCurrentActivityThread");
-            Map mPackages = (Map) HookUtil.getField(atClazz, "mPackages", atInstance);
 
             Class<?> ppClazz = Class.forName("android.content.pm.PackageParser");
             Object pp = ppClazz.newInstance();
@@ -126,16 +124,13 @@ public class PluginManager {
             ai.publicSourceDir = apkPath;
 
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
-            // TODO: 2018/3/26 想了好久，context.getClassLoader().getParent()就可以加载AppcompatActivity
+            // TODO: 2018/3/26 android6.0以上context.getClassLoader().getParent()就可以加载AppcompatActivity
             //PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
             //        context.getClassLoader().getParent());
             PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
                     context.getClassLoader().getParent());
             HookUtil.setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
-            Log.d(TAG, "hookPluginActivity: "
-                    + context.getClassLoader().toString()
-                    + "; parent : "
-                    + context.getClassLoader().getParent());
+            //Thread.currentThread().setContextClassLoader(classLoader);
 
             PluginManager.getInstance().cachePackage(ai.packageName, loadedApk);
             AppPlugin appPlugin =
@@ -154,9 +149,7 @@ public class PluginManager {
             mInstrumentation.callApplicationOnCreate(app);
             appPlugin.setApplication(app);*/
 
-            WeakReference ref = new WeakReference(loadedApk);
-            mPackages.put(ai.packageName, ref);
-            Log.e(TAG, "hookPluginActivity: " + ai.packageName);
+            Log.i(TAG, "hookPluginActivity: " + ai.packageName);
         } catch (Exception e) {
             e.printStackTrace();
         }

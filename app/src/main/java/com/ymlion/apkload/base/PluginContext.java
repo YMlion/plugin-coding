@@ -44,4 +44,9 @@ public class PluginContext extends ContextWrapper {
         Log.d(TAG, "createConfigurationContext");
         return super.createConfigurationContext(overrideConfiguration);
     }
+
+    @Override public Object getSystemService(String name) {
+        Log.d(TAG, "getSystemService: " + name);
+        return super.getSystemService(name);
+    }
 }

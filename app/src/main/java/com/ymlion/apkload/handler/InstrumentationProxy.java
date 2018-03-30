@@ -10,6 +10,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import com.ymlion.apkload.base.AppPlugin;
@@ -69,6 +70,20 @@ public class InstrumentationProxy extends Instrumentation {
                         break;
                     }
                 }
+
+                Class appcompatClazz =
+                        activity.getClassLoader().loadClass(AppCompatActivity.class.getName());
+                if (activity.getClass().getSuperclass() == appcompatClazz) {
+                    Log.e(TAG, "yes");
+                    Method getDelegate = appcompatClazz.getDeclaredMethod("getDelegate");
+                    Object delegate = getDelegate.invoke(activity);
+                    Class delegatBase = activity.getClassLoader()
+                            .loadClass("android.support.v7.app.AppCompatDelegateImplBase");
+                    Context context1 =
+                            (Context) HookUtil.getField(delegatBase, "mContext", delegate);
+                    Log.e(TAG, "activity == mContext is " + (context1 == activity));
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
