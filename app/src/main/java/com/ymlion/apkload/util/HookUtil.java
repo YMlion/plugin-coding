@@ -128,7 +128,7 @@ public class HookUtil {
     /**
      * hook instrumentation
      */
-    public static void hookInstrumentation(Context context) {
+    public static void hookInstrumentation() {
         try {
             Class<?> clazz = Class.forName("android.app.ActivityThread");
             Method ca = clazz.getDeclaredMethod("currentActivityThread");

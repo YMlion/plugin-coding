@@ -1,6 +1,7 @@
 package com.ymlion.apkload.handler;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -60,6 +61,16 @@ public class InstrumentationProxy extends Instrumentation {
                 // TODO: 2018/3/13 After set the mBase, should override the getPackageName in plugin activity
                 HookUtil.setField(ContextWrapper.class, "mBase", activity,
                         appPlugin.getPluginContext());
+                Object loadedapk = HookUtil.getField(Application.class, "mLoadedApk",
+                        activity.getApplication());
+                ClassLoader appLoader =
+                        (ClassLoader) HookUtil.getField(loadedapk.getClass(), "mClassLoader",
+                                loadedapk);
+                Log.d(TAG, "the activity's application is "
+                        + activity.getApplication()
+                        + ", class loader is "
+                        + appLoader);
+
                 //HookUtil.setField(Activity.class, "mApplication", activity,
                 //        appPlugin.getApplication());
 

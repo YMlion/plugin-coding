@@ -1,5 +1,6 @@
 package com.ymlion.apkload.base;
 
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -49,7 +50,7 @@ public class PluginManager {
         HookUtil.hookAMS();
         HookUtil.hookActivityThreadHandler();
         HookUtil.hookPMS(context);
-        HookUtil.hookInstrumentation(context);
+        HookUtil.hookInstrumentation();
         preLoad(context);
     }
 
@@ -106,6 +107,8 @@ public class PluginManager {
                             pusClazz);
             ApplicationInfo ai =
                     (ApplicationInfo) generateApplicationInfo.invoke(null, pkg, 0, pus);
+            ai.sourceDir = apkPath;
+            ai.publicSourceDir = apkPath;
 
             Class<?> compatibilityInfoClazz =
                     Class.forName("android.content.res.CompatibilityInfo");
@@ -120,9 +123,6 @@ public class PluginManager {
             Object loadedApk =
                     getPackageInfoNoCheck.invoke(atInstance, ai, defaultCompatibilityInfo);
 
-            ai.sourceDir = apkPath;
-            ai.publicSourceDir = apkPath;
-
             String dexDir = context.getDir("dex", Context.MODE_PRIVATE).getAbsolutePath();
             // TODO: 2018/3/26 android6.0以上context.getClassLoader().getParent()就可以加载AppcompatActivity
             //PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
@@ -130,7 +130,6 @@ public class PluginManager {
             PluginClassLoader classLoader = new PluginClassLoader(apkPath, dexDir, null,
                     context.getClassLoader().getParent());
             HookUtil.setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
-            //Thread.currentThread().setContextClassLoader(classLoader);
 
             PluginManager.getInstance().cachePackage(ai.packageName, loadedApk);
             AppPlugin appPlugin =
@@ -142,8 +141,16 @@ public class PluginManager {
             Method makeApplication = loadedApk.getClass()
                     .getDeclaredMethod("makeApplication", boolean.class, Instrumentation.class);
             makeApplication.setAccessible(true);
-            makeApplication.invoke(loadedApk, false, mInstrumentation);
-            /*Application app = mInstrumentation.newApplication(classLoader,
+            Application app =
+                    (Application) makeApplication.invoke(loadedApk, false, mInstrumentation);
+            appPlugin.setApplication(app);
+            Log.d(TAG, "installPlugin: " + Thread.currentThread().getContextClassLoader());
+            Thread.currentThread().setContextClassLoader(classLoader);
+
+            /*Method setArgV0 = Process.class.getDeclaredMethod("setArgV0", String.class);
+            setArgV0.setAccessible(true);
+            setArgV0.invoke(null, ai.packageName);
+            Application app = mInstrumentation.newApplication(classLoader,
                     ai.className == null ? "android.app.Application" : ai.className,
                     appPlugin.getPluginContext());
             mInstrumentation.callApplicationOnCreate(app);

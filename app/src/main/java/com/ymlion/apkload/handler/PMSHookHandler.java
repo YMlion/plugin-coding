@@ -48,7 +48,13 @@ public class PMSHookHandler implements InvocationHandler {
                     if (appPlugin != null) {
                         for (ActivityInfo activityInfo : appPlugin.mActivityInfos) {
                             if (target.getClassName().equals(activityInfo.name)) {
-                                Log.d(TAG, "get the activity info " + activityInfo.name);
+                                Log.d(TAG, "get the activity info "
+                                        + activityInfo.name
+                                        + "; "
+                                        + activityInfo.processName);
+                                if (activityInfo.processName == null) {
+                                    activityInfo.processName = activityInfo.packageName;
+                                }
                                 return activityInfo;
                             }
                         }
