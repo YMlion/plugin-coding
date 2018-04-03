@@ -12,10 +12,17 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
+import android.view.View;
 import com.ymlion.apkload.base.AppPlugin;
 import com.ymlion.apkload.base.PluginManager;
 import com.ymlion.apkload.util.HookUtil;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Instrumentation代理类，目前只区判断是否是插桩activity
@@ -24,7 +31,7 @@ import java.lang.reflect.Method;
 
 public class InstrumentationProxy extends Instrumentation {
     private static final String TAG = "InstrumentationProxy";
-
+    private static int pluginActivities = 0;
     private Instrumentation proxy;
 
     public InstrumentationProxy(Instrumentation proxy) {
@@ -61,18 +68,60 @@ public class InstrumentationProxy extends Instrumentation {
                         break;
                     }
                 }
-
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            pluginActivities++;
+        }
+        if (Build.VERSION.SDK_INT <= 23) {
+            try {// 清除掉LayoutInflater.sConstructorMap中的第三方数据，来自sdk26源码
+                HashMap<String, Constructor<? extends View>> sConstructorMap =
+                        (HashMap<String, Constructor<? extends View>>) HookUtil.getField(
+                                LayoutInflater.class, "sConstructorMap");
+                if (!sConstructorMap.isEmpty()) {
+                    Set<Map.Entry<String, Constructor<? extends View>>> entrySet =
+                            sConstructorMap.entrySet();
+                    Iterator<Map.Entry<String, Constructor<? extends View>>> iterator =
+                            entrySet.iterator();
+                    while (iterator.hasNext()) {
+                        Map.Entry<String, Constructor<? extends View>> entry = iterator.next();
+                        if (!verifyClassLoader(entry.getValue(), activity)) {
+                            iterator.remove();
+                        }
+                    }
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
         proxy.callActivityOnCreate(activity, icicle);
+    }
+
+    private static final ClassLoader BOOT_CLASS_LOADER = LayoutInflater.class.getClassLoader();
+
+    private final boolean verifyClassLoader(Constructor<? extends View> constructor,
+            Context context) {
+        final ClassLoader constructorLoader = constructor.getDeclaringClass().getClassLoader();
+        if (constructorLoader == BOOT_CLASS_LOADER) {
+            // fast path for boot class loader (most common case?) - always ok
+            return true;
+        }
+        // in all normal cases (no dynamic code loading), we will exit the following loop on the
+        // first iteration (i.e. when the declaring classloader is the contexts class loader).
+        ClassLoader cl = context.getClassLoader();
+        do {
+            if (constructorLoader == cl) {
+                return true;
+            }
+            cl = cl.getParent();
+        } while (cl != null);
+        return false;
     }
 
     @Override public Activity newActivity(ClassLoader cl, String className, Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        Log.d(TAG,
-                "newActivity: " + className + "; classLoader : " + cl.getClass().getName());
+        Log.d(TAG, "newActivity: " + className + "; classLoader : " + cl.getClass().getName());
         Activity activity = null;
         ComponentName component = intent.getComponent();
         AppPlugin appPlugin = null;
@@ -104,6 +153,11 @@ public class InstrumentationProxy extends Instrumentation {
             }
         }
         return activity;
+    }
+
+    @Override public void callActivityOnDestroy(Activity activity) {
+        pluginActivities--;
+        proxy.callActivityOnDestroy(activity);
     }
 
     @Override public Context getContext() {
