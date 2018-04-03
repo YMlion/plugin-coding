@@ -40,7 +40,7 @@ public class PMSHookHandler implements InvocationHandler {
             if (target != null) {
                 if (target.getClassName().endsWith("New1Activity")) {
                     ComponentName old = new ComponentName("com.ymlion.apkload",
-                            "com.ymlion.apkload.StubActivity");
+                            "com.ymlion.apkload.$1StubActivity");
                     args[i] = old;
                 } else if (target.getPackageName().endsWith("pluginuninstalled")) {
                     AppPlugin appPlugin =
@@ -59,6 +59,7 @@ public class PMSHookHandler implements InvocationHandler {
                             }
                         }
                     }
+                    // 正常情况下是执行不到这的，只是以防万一
                     ComponentName old = new ComponentName("com.ymlion.apkload",
                             "com.ymlion.apkload.StubActivity");
                     args[i] = old;
@@ -73,8 +74,28 @@ public class PMSHookHandler implements InvocationHandler {
                     }
                 }
             }
+        } else if ("getApplicationInfo".equals(method.getName())) {
+            for (Object arg : args) {
+                if (arg instanceof String) {
+                    if (((String) arg).endsWith("pluginuninstalled")) {
+                        Log.d(TAG, "getApplicationInfo: " + arg);
+                        Object info = getApplicationInfo((String) arg);
+                        if (info != null) {
+                            return info;
+                        }
+                    }
+                }
+            }
         }
         return method.invoke(base, args);
+    }
+
+    private Object getApplicationInfo(String pkg) {
+        AppPlugin plugin = PluginManager.getInstance().getCachePlugin(pkg);
+        if (plugin != null) {
+            return plugin.getApplicationInfo();
+        }
+        return null;
     }
 
     private Object getPackageInfo(String packageName) {

@@ -109,6 +109,7 @@ public class PluginManager {
                     (ApplicationInfo) generateApplicationInfo.invoke(null, pkg, 0, pus);
             ai.sourceDir = apkPath;
             ai.publicSourceDir = apkPath;
+            ai.uid = context.getApplicationInfo().uid;
 
             Class<?> compatibilityInfoClazz =
                     Class.forName("android.content.res.CompatibilityInfo");
@@ -134,6 +135,7 @@ public class PluginManager {
             PluginManager.getInstance().cachePackage(ai.packageName, loadedApk);
             AppPlugin appPlugin =
                     new AppPlugin(classLoader, HookUtil.getPluginResources(context, apkPath));
+            appPlugin.setApplicationInfo(ai);
             appPlugin.parsePackage(ai.packageName, pkg);
 
             Instrumentation mInstrumentation =
@@ -149,8 +151,8 @@ public class PluginManager {
 
             /*Method setArgV0 = Process.class.getDeclaredMethod("setArgV0", String.class);
             setArgV0.setAccessible(true);
-            setArgV0.invoke(null, ai.packageName);
-            Application app = mInstrumentation.newApplication(classLoader,
+            setArgV0.invoke(null, ai.packageName);*/
+            /*Application app = mInstrumentation.newApplication(classLoader,
                     ai.className == null ? "android.app.Application" : ai.className,
                     appPlugin.getPluginContext());
             mInstrumentation.callApplicationOnCreate(app);

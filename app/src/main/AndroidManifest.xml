@@ -23,17 +23,18 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".StubActivity"/>
-        <!--
-                <activity android:name=".StubActivity"
-                    android:process=":stub">
-                    <intent-filter>
-                        <action android:name="android.intent.action.MAIN"/>
+        <activity
+            android:name=".$1StubActivity"
+            android:process=":stub"/>
+        <activity
+            android:name=".StubActivity"
+            android:process=":stub">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
 
-                        <category android:name="android.intent.category.LAUNCHER"/>
-                    </intent-filter>
-                </activity>
-        -->
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".handler.ProxyService">

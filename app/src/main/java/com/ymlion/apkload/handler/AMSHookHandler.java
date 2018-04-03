@@ -39,13 +39,19 @@ public class AMSHookHandler implements InvocationHandler {
                     String targetClass = component.getClassName();
                     if (targetClass.endsWith("New1Activity")) {
                         ComponentName newComponent = new ComponentName(component.getPackageName(),
-                                "com.ymlion.apkload.StubActivity");
-                        intent.setComponent(newComponent).putExtra("targetClass", targetClass).putExtra("targetPackage", component.getPackageName());
+                                "com.ymlion.apkload.$1StubActivity");
+                        intent.setComponent(newComponent)
+                                .putExtra("targetClass", targetClass)
+                                .putExtra("targetPackage", component.getPackageName());
                     } else if (!targetClass.startsWith("com.ymlion.apkload")) {
-                        ComponentName newComponent = new ComponentName("com.ymlion.apkload",
-                                "com.ymlion.apkload.StubActivity");
+                        int flags = intent.getFlags();
+                        String stub = "com.ymlion.apkload.$1StubActivity";
+                        if ((flags & Intent.FLAG_ACTIVITY_NEW_TASK) != 0 && targetClass.endsWith(
+                                "MainActivity")) {// 是否是启动main activity
+                            stub = "com.ymlion.apkload.StubActivity";
+                        }
+                        ComponentName newComponent = new ComponentName("com.ymlion.apkload", stub);
                         Log.d(TAG, "start target package is " + component.getPackageName());
-                        // TODO: 2018/3/13  target package is com.ymlion.pluginuninstalled, but component.getPackageName() is com.ymlion.apkload in plugin startActivity
                         intent.setComponent(newComponent)
                                 .putExtra("targetClass", targetClass)
                                 .putExtra("targetPackage", component.getPackageName());
@@ -66,7 +72,8 @@ public class AMSHookHandler implements InvocationHandler {
                     String targetClass = cn.getClassName();
                     String targetPkg = cn.getPackageName();
                     if (!targetClass.startsWith("com.ymlion.apkload")) {
-                        intent.setComponent(new ComponentName("com.ymlion.apkload", ProxyService.class.getName()));
+                        intent.setComponent(new ComponentName("com.ymlion.apkload",
+                                ProxyService.class.getName()));
                         intent.putExtra("targetClass", targetClass);
                         intent.putExtra("targetPackage", targetPkg);
                         intent.putExtra(ProxyService.COMMAND, ProxyService.COMMAND_START);

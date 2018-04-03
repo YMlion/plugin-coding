@@ -1,7 +1,6 @@
 package com.ymlion.apkload.handler;
 
 import android.app.Activity;
-import android.app.Application;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -11,7 +10,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import com.ymlion.apkload.base.AppPlugin;
@@ -34,6 +32,7 @@ public class InstrumentationProxy extends Instrumentation {
     }
 
     @Override public void callActivityOnCreate(Activity activity, Bundle icicle) {
+        // 如何在android6.0及以下正常启动AppcompatActivity，除了设置单独的进程，还可以修改LayoutInflate
         if (activity.getPackageName().endsWith("pluginuninstalled")) {
             try {
                 Context context = activity.getBaseContext();
@@ -43,17 +42,8 @@ public class InstrumentationProxy extends Instrumentation {
                 // android21 no effect
                 HookUtil.setFieldWithoutException(context.getClass(), "mResources", context,
                         resources);
-                /*HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
+                HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
                         resources);
-                try {
-                    Method selectDefaultTheme = Resources.class.getDeclaredMethod("selectDefaultTheme", int.class, int.class);
-                    int theme = (int) selectDefaultTheme.invoke(null, 0, Build.VERSION.SDK_INT);
-                    Resources.Theme pluginTheme = resources.newTheme();
-                    pluginTheme.applyStyle(theme, false);
-                    HookUtil.setField(ContextThemeWrapper.class, "mTheme", activity, pluginTheme);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }*/
                 if (Build.VERSION.SDK_INT <= 19) {
                     HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
                             appPlugin.getPluginContext());
@@ -61,16 +51,6 @@ public class InstrumentationProxy extends Instrumentation {
                 // TODO: 2018/3/13 After set the mBase, should override the getPackageName in plugin activity
                 HookUtil.setField(ContextWrapper.class, "mBase", activity,
                         appPlugin.getPluginContext());
-                Object loadedapk = HookUtil.getField(Application.class, "mLoadedApk",
-                        activity.getApplication());
-                ClassLoader appLoader =
-                        (ClassLoader) HookUtil.getField(loadedapk.getClass(), "mClassLoader",
-                                loadedapk);
-                Log.d(TAG, "the activity's application is "
-                        + activity.getApplication()
-                        + ", class loader is "
-                        + appLoader);
-
                 //HookUtil.setField(Activity.class, "mApplication", activity,
                 //        appPlugin.getApplication());
 
@@ -82,19 +62,6 @@ public class InstrumentationProxy extends Instrumentation {
                     }
                 }
 
-                Class appcompatClazz =
-                        activity.getClassLoader().loadClass(AppCompatActivity.class.getName());
-                if (activity.getClass().getSuperclass() == appcompatClazz) {
-                    Log.e(TAG, "yes");
-                    Method getDelegate = appcompatClazz.getDeclaredMethod("getDelegate");
-                    Object delegate = getDelegate.invoke(activity);
-                    Class delegatBase = activity.getClassLoader()
-                            .loadClass("android.support.v7.app.AppCompatDelegateImplBase");
-                    Context context1 =
-                            (Context) HookUtil.getField(delegatBase, "mContext", delegate);
-                    Log.e(TAG, "activity == mContext is " + (context1 == activity));
-                }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -104,7 +71,7 @@ public class InstrumentationProxy extends Instrumentation {
 
     @Override public Activity newActivity(ClassLoader cl, String className, Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        Log.e("InstrumentationProxy",
+        Log.d(TAG,
                 "newActivity: " + className + "; classLoader : " + cl.getClass().getName());
         Activity activity = null;
         ComponentName component = intent.getComponent();

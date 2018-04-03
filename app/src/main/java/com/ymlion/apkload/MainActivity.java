@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
-        PluginManager.getInstance().init(this);
+        //PluginManager.getInstance().init(this);
     }
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {

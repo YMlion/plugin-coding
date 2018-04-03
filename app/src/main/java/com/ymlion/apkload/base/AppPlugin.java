@@ -71,14 +71,16 @@ public class AppPlugin {
         return mApplicationInfo;
     }
 
+    public void setApplicationInfo(ApplicationInfo applicationInfo) {
+        mApplicationInfo = applicationInfo;
+    }
+
     public void parsePackage(String packageName, Object pkg) {
         if (pkg == null) {
             return;
         }
         try {
             mPackage = pkg;
-            mApplicationInfo =
-                    (ApplicationInfo) HookUtil.getField(pkg.getClass(), "applicationInfo", pkg);
 
             List<?> activities = (List<?>) HookUtil.getField(pkg.getClass(), "activities", pkg);
             for (Object activity : activities) {
