@@ -18,8 +18,7 @@
         </activity>
         <activity android:name=".Plugin1Activity">
         </activity>
-        <activity
-            android:name=".Plugin2Activity">
+        <activity android:name=".Plugin2Activity">
         </activity>
         <activity android:name=".Plugin3Activity">
         </activity>
@@ -30,9 +29,14 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name=".Plugin1Service">
+        <service android:name=".Plugin1Service">
         </service>
+
+        <activity
+            android:name=".Plugin4Activity"
+            android:label="@string/title_activity_plugin4"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
     </application>
 
 </manifest>

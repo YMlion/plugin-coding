@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PluginUninstalled</string>
+    <string name="title_activity_plugin4">Plugin4Activity</string>
 </resources>
