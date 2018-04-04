@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,7 +17,6 @@ import com.ymlion.apkload.base.AppPlugin;
 import com.ymlion.apkload.base.PluginManager;
 import com.ymlion.apkload.util.HookUtil;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -45,12 +43,12 @@ public class InstrumentationProxy extends Instrumentation {
                 Context context = activity.getBaseContext();
                 AppPlugin appPlugin =
                         PluginManager.getInstance().getCachePlugin(context.getPackageName());
-                Resources resources = appPlugin.getResources();
+                //Resources resources = appPlugin.getResources();
                 // android21 no effect
-                HookUtil.setFieldWithoutException(context.getClass(), "mResources", context,
-                        resources);
-                HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
-                        resources);
+                //HookUtil.setFieldWithoutException(context.getClass(), "mResources", context,
+                //        resources);
+                //HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
+                //        resources);
                 if (Build.VERSION.SDK_INT <= 19) {
                     HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mBase", activity,
                             appPlugin.getPluginContext());
@@ -137,10 +135,10 @@ public class InstrumentationProxy extends Instrumentation {
                 activity.setIntent(intent);
             }
         }
-        if (appPlugin != null) {//android21 no effect
-            HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
-                    appPlugin.getResources());
+        /*if (appPlugin != null) {
             try {
+                HookUtil.setFieldWithoutException(ContextThemeWrapper.class, "mResources", activity,
+                        appPlugin.getResources());
                 Method selectDefaultTheme =
                         Resources.class.getDeclaredMethod("selectDefaultTheme", int.class,
                                 int.class);
@@ -151,7 +149,7 @@ public class InstrumentationProxy extends Instrumentation {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         return activity;
     }
 
