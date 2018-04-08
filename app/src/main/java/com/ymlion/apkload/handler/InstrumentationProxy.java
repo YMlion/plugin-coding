@@ -156,6 +156,11 @@ public class InstrumentationProxy extends Instrumentation {
     @Override public void callActivityOnDestroy(Activity activity) {
         pluginActivities--;
         proxy.callActivityOnDestroy(activity);
+        /*if (pluginActivities <= 0) {
+            if (!activity.getPackageName().equals(PluginManager.getInstance().getBase().getPackageName())) {
+                Process.killProcess(Process.myPid());
+            }
+        }*/
     }
 
     @Override public Context getContext() {

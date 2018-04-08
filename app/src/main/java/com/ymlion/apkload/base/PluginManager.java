@@ -132,7 +132,7 @@ public class PluginManager {
                     context.getClassLoader().getParent());
             HookUtil.setField(loadedApk.getClass(), "mClassLoader", loadedApk, classLoader);
 
-            PluginManager.getInstance().cachePackage(ai.packageName, loadedApk);
+            getInstance().cachePackage(ai.packageName, loadedApk);
             AppPlugin appPlugin =
                     new AppPlugin(classLoader, HookUtil.getPluginResources(context, apkPath));
             appPlugin.setApplicationInfo(ai);
