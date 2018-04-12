@@ -1,44 +1,27 @@
-package com.ymlion.gradle.plugin
+package com.ymlion.gradle
 
 import com.android.build.gradle.api.BaseVariant
-import com.android.build.gradle.tasks.ProcessAndroidResources
-import com.ymlion.gradle.TaskListener
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.file.FileTree
 
 /**
  * Created by YMlion on 2018/4/11.*/
-class AaptPlugin implements Plugin<Project> {
+public class AaptPlugin implements Plugin<Project> {
 
     @Override void apply(Project project) {
 
-        project.gradle.addListener(new TaskListener())
+        def listener = new TaskListener(project)
+        project.gradle.addListener(listener)
 
         def android = project.android
 
         android.applicationVariants.all { BaseVariant variant ->
-            def pr = project.tasks["process${variant.name}Resources"]
-            pr.doLast {
-                //                modifyRes(it)
-                println("do the task!!!!!!!!!")
+            def pr = project.tasks["process${variant.name.capitalize()}Resources"]
+            if (pr != null) {
+                listener.setTaskName(pr.name)
+                listener.setApkVariant(variant)
+                listener.setPackageName(variant.applicationId)
             }
-        }
-    }
-
-    void modifyRes(ProcessAndroidResources pr) {
-        // Unpack resources.ap_
-        File apFile = pr.packageOutputFile
-        FileTree apFiles = project.zipTree(apFile)
-        File unzipApDir = new File(apFile.parentFile, 'ap_unzip')
-        unzipApDir.delete()
-        project.copy {
-            from apFiles
-            into unzipApDir
-
-            include 'AndroidManifest.xml'
-            include 'resources.arsc'
-            include 'res/**/*'
         }
     }
 }
