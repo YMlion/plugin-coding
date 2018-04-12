@@ -1,8 +1,23 @@
+/*
+ * Copyright 2015-present wequick.net
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.ymlion.gradle.aapt
 
 /**
  * Class to edit aapt-generated resources.arsc file*/
-public class ArscEditor extends AssetEditor {
+class ArscEditor extends AssetEditor {
     /*      Arsc struct
      *  +-----------------------+
      *  | Table Header          |
@@ -55,6 +70,7 @@ public class ArscEditor extends AssetEditor {
 
         def retainedTypeSpecs = []
         def retainedStringIds = []
+        def retainedStringEntries = [:]
         def retainedTypeIds = []
         def retainedKeyIds = []
         def retainedEntries = []
@@ -71,23 +87,12 @@ public class ArscEditor extends AssetEditor {
             retainedTypeIds.add(attrSpec.id - 1)
             retainedTypeSpecs.add(attrSpec)
         }
-
-        def index = 0
-        while (index < t.stringPool.styleCount) {
-            retainedStringIds.add(index++)
-        }
-
-
         // Filter typeSpecs
         retainedTypes.each {
             if (it.id == Aapt.ID_DELETED) {
                 // TODO: Add empty entry to default config
                 throw new UnsupportedOperationException(
                     "No support deleting resources on lib.* now")
-            }
-
-            if (it.id == Aapt.ID_NO_ATTR) {
-                return
             }
 
             def ts = t.typeList.specs[it.id - 1]
@@ -148,19 +153,20 @@ public class ArscEditor extends AssetEditor {
                         if (dataType == ResValueDataType.TYPE_STRING) {
                             // String reference
                             def oldId = entry.value.data
-                            def newId = retainedStringIds.indexOf(oldId)
-                            if (newId < 0) {
+                            if (!retainedStringIds.contains(oldId)) {
                                 retainedStringIds.add(oldId)
-                                newId = retainedStringIds.size() - 1
                             }
-                            entry.value.data = newId
+
+                            def stringEntries = retainedStringEntries[oldId]
+                            if (stringEntries == null) {
+                                retainedStringEntries[oldId] = stringEntries = []
+                            }
+                            stringEntries.add(entry)
                         } else if (dataType == ResValueDataType.TYPE_REFERENCE) {
                             def id = idMaps.get(entry.value.data)
                             if (id != null) {
-                                if (DEBUG_NOISY) {
-                                    println "\t -- map ResTable_entry.value: " + "${String.format('0x%08x', entry.value.data)} -> " +
+                                if (DEBUG_NOISY) println "\t -- map ResTable_entry.value: " + "${String.format('0x%08x', entry.value.data)} -> " +
                                         "${String.format('0x%08x', id)}"
-                                }
                                 entry.value.data = id
                             }
                         }
@@ -168,39 +174,36 @@ public class ArscEditor extends AssetEditor {
                         // Reset entry parent
                         def id = idMaps.get(entry.parent)
                         if (id != null) {
-                            if (DEBUG_NOISY) {
-                                println "\t -- map ResTable_map_entry.parent: " + "${String.format('0x%08x', entry.parent)} -> " +
+                            if (DEBUG_NOISY) println "\t -- map ResTable_map_entry.parent: " + "${String.format('0x%08x', entry.parent)} -> " +
                                     "${String.format('0x%08x', id)}"
-                            }
                             entry.parent = id
                         }
                         entry.maps.each {
                             // Reset map ids
                             id = idMaps.get(it.name)
                             if (id != null) {
-                                if (DEBUG_NOISY) {
-                                    println "\t -- map ResTable_map.name: " + "${String.format('0x%08x', it.name)} -> " +
+                                if (DEBUG_NOISY) println "\t -- map ResTable_map.name: " + "${String.format('0x%08x', it.name)} -> " +
                                         "${String.format('0x%08x', id)}"
-                                }
                                 it.name = id
                             }
                             dataType = it.value.dataType
                             if (dataType == ResValueDataType.TYPE_STRING) {
                                 // String reference
                                 def oldId = it.value.data
-                                def newId = retainedStringIds.indexOf(oldId)
-                                if (newId < 0) {
+                                if (!retainedStringIds.contains(oldId)) {
                                     retainedStringIds.add(oldId)
-                                    newId = retainedStringIds.size() - 1
                                 }
-                                it.value.data = newId
+
+                                def stringEntries = retainedStringEntries[oldId]
+                                if (stringEntries == null) {
+                                    retainedStringEntries[oldId] = stringEntries = []
+                                }
+                                stringEntries.add(it)
                             } else if (dataType == ResValueDataType.TYPE_REFERENCE) {
                                 id = idMaps.get(it.value.data)
                                 if (id != null) {
-                                    if (DEBUG_NOISY) {
-                                        println "\t -- map ResTable_map.value: " + "${String.format('0x%08x', it.value.data)} -> " +
+                                    if (DEBUG_NOISY) println "\t -- map ResTable_map.value: " + "${String.format('0x%08x', it.value.data)} -> " +
                                             "${String.format('0x%08x', id)}"
-                                    }
                                     it.value.data = id
 
                                     int pid = (id >> 24)
@@ -228,7 +231,6 @@ public class ArscEditor extends AssetEditor {
             retainedTypeSpecs.add(ts)
             retainedTypeIds.add(it.id - 1)
         }
-
         // Reset entry keys (reference to keyStringPool index)
         def keyMaps = [:]
         retainedKeyIds.eachWithIndex { key, newKey -> keyMaps.put(key, newKey)
@@ -237,9 +239,8 @@ public class ArscEditor extends AssetEditor {
         }
         t.typeList.specs = retainedTypeSpecs
 
-
         // Filter string pools
-        filterStringPool(t.stringPool, retainedStringIds)
+        filterStringPool(t.stringPool, retainedStringIds, retainedStringEntries)
         filterStringPool(t.typeStringPool, retainedTypeIds)
         filterStringPool(t.keyStringPool, retainedKeyIds)
 
@@ -306,8 +307,6 @@ public class ArscEditor extends AssetEditor {
         if (DEBUG_NOISY) dumpTable()
 
         close()
-
-        print '###############################################################'
     }
 
     /**
@@ -418,7 +417,6 @@ public class ArscEditor extends AssetEditor {
         t.typeList = readTypeList()
         return t
     }
-
     /** Write all data of resources.arsc */
     def writeTable(t) {
         writeChunkHeader(t.header)
@@ -446,7 +444,6 @@ public class ArscEditor extends AssetEditor {
         p.typeIdOffset = readInt()
         return p
     }
-
     /** Write struct ResTable_package */
     def writePackage(p) {
         writeChunkHeader(p.header)
@@ -536,7 +533,6 @@ public class ArscEditor extends AssetEditor {
         }
         return [specs: specs, lib: lib]
     }
-
     /** Write 1 x ResTable_lib + (ResTable_typeSpec + ResTable_type x M) x N */
     def writeTypeList(tl) {
         if (tl.lib) {
@@ -556,7 +552,7 @@ public class ArscEditor extends AssetEditor {
             writeShort(ts.res1)
             writeInt(ts.entryCount)
             ts.flags.each {
-                writeInt(it ?: 0)
+                writeInt(it)
             }
             ts.configs.each { c ->
                 // ResTable_type
@@ -586,7 +582,6 @@ public class ArscEditor extends AssetEditor {
         e.key = readInt()
         return e
     }
-
     /** Read struct ResTable_entry or ResTable_map_entry */
     def readTableEntry() {
         def e = _readTableEntry()
@@ -603,7 +598,6 @@ public class ArscEditor extends AssetEditor {
         }
         return e
     }
-
     /** Write struct ResTable_entry or ResTable_map_entry */
     def writeTableEntry(e) {
         writeShort(e.size)
@@ -627,7 +621,6 @@ public class ArscEditor extends AssetEditor {
         m.value = readResValue()
         return m
     }
-
     /** Write struct ResTable_map */
     def writeTableMap(m) {
         writeInt(m.name)
@@ -675,7 +668,6 @@ public class ArscEditor extends AssetEditor {
         c.ignored = readBytes(mTableConfigSize)
         return c
     }
-
     /** Write struct ResTable_config */
     def writeTableConfig(c) {
         writeBytes(c.ignored)

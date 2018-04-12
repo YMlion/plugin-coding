@@ -1,18 +1,33 @@
+/*
+ * Copyright 2015-present wequick.net
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.ymlion.gradle.aapt
 
 /**
  * Class to parse aapt-generated text symbols file (intermediates/symbols/R.txt)*/
-public final class SymbolParser {
+final class SymbolParser {
 
-    public static final class Entry {
-        public final String type
-        public final String name
+    static final class Entry {
+        public String type
+        public String name
 
-        public String getKey() {
+        String getKey() {
             return "$type/$name"
         }
 
-        Entry(final type, final name) {
+        Entry(type, name) {
             this.type = type
             this.name = name
         }
@@ -23,17 +38,9 @@ public final class SymbolParser {
         }
 
         @Override
-        boolean equals(final Object obj) {
-            if (this.is(obj)) {
-                return true
-            }
-
-            if (obj instanceof Entry) {
-                Entry e = (Entry) obj
-                return e.type.equals(type) && e.name.equals(name)
-            }
-
-            return false
+        boolean equals(Object obj) {
+            Entry e = (Entry) obj
+            return e.type.equals(type) && e.name.equals(name)
         }
 
         @Override
@@ -44,12 +51,10 @@ public final class SymbolParser {
 
     /**
      * Get declare of one line
-     *
-     * @param s
-     *            e.g. 'int anim abc_fade_in 0x7f050000'
+     * @param s e.g. 'int anim abc_fade_in 0x7f050000'
      * @return e.g. 'int anim abc_fade_in'
      */
-    public static String getResourceDeclare(final String s) {
+    static String getResourceDeclare(String s) {
         def arr = s.toCharArray()
         def find = 0
         def i = 0
@@ -58,28 +63,29 @@ public final class SymbolParser {
             if (c == ' ') find++
             if (find == 3) break // skip 3 spaces
         }
-
         return s.substring(0, i)
     }
 
     /**
      * Get entry data of one line
-     *
-     * @param str
-     *            the line text
+     * @param str the line text
      * @param needsId
      * @return entry map, e.g. [type:string, typeId:6, entryId:21, key:hello, id:0x7f060015]
      */
-    public static Map<String, ?> getResourceEntry(String str) {
+    static def getResourceEntry(String str) {
         if (str == '') return null
 
-        final def tokenizer = new StringTokenizer(str)
-        final def vtype = tokenizer.nextToken()
+        def i = str.indexOf(' ')
+        def vtype = str.substring(0, i)
         // value type (int or int[])
-        final def type = tokenizer.nextToken()
+        str = str.substring(i + 1)
+        i = str.indexOf(' ')
+        def type = str.substring(0, i)
         // resource type (attr/string/color etc.)
-        final def key = tokenizer.nextToken()
-        final def idStr = tokenizer.nextToken('\r\n').trim()
+        str = str.substring(i + 1)
+        i = str.indexOf(' ')
+        String key = str.substring(0, i)
+        String idStr = str.substring(i + 1)
 
         if (type == 'styleable') {
             // Styleables won't be compiled to resources.arsc file but saved in `R.java',
@@ -115,15 +121,12 @@ public final class SymbolParser {
 
     /**
      * Get entries data of each line
-     *
      * @param file
      * @return
      */
-    public static Map<String, Map<String, ?>> getResourceEntries(final File file) {
+    static def getResourceEntries(File file) {
         def es = [:]
-        if (!file.exists()) {
-            return es
-        }
+        if (!file.exists()) return es
 
         file.eachLine { str ->
             def entry = getResourceEntry(str)
@@ -133,7 +136,7 @@ public final class SymbolParser {
         return es
     }
 
-    public static void collectResourceKeys(File file, String targetType, List excludes,
+    static void collectResourceKeys(File file, String targetType, List excludes,
         List outEntries, List outStyleableKeys) {
         if (!file.exists()) return
 
@@ -163,21 +166,17 @@ public final class SymbolParser {
         }
     }
 
-    public static void collectAarResourceKeys(File file, Set outEntries, Set outStyleableKeys) {
+    static void collectAarResourceKeys(File file, List outEntries, List outStyleableKeys) {
         if (!file.exists()) return
 
         file.eachLine { str ->
             if (str == '') return
 
-            def i = str.indexOf(' ')
-            str = str.substring(i + 1)
-            i = str.indexOf(' ')
-            def type = str.substring(0, i)
+            def arr = str.split('/')
+            if (arr.length != 2) return
 
-            str = str.substring(i + 1)
-            i = str.indexOf(' ')
-            def name = str.substring(0, i)
-
+            def type = arr[0]
+            def name = arr[1]
             if (type == 'styleable') {
                 if (outStyleableKeys != null) {
                     outStyleableKeys.add(name)

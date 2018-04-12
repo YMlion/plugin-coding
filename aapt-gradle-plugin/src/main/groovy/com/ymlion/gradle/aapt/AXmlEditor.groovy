@@ -1,12 +1,27 @@
+/*
+ * Copyright 2015-present wequick.net
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.ymlion.gradle.aapt
 
 /**
  * Class to edit aapt-generated hex xml file*/
-public class AXmlEditor extends AssetEditor {
+class AXmlEditor extends AssetEditor {
 
     private static final ATTR_BEFORE_ID_LENGTH = 16
 
-    AXmlEditor(final File file) {
+    AXmlEditor(File file) {
         super(file)
     }
 
@@ -18,18 +33,16 @@ public class AXmlEditor extends AssetEditor {
     // So we also carry a flag to specify whether the plugin apk has resources.
     //
     // The above flag will be merged into an integer and write to `platformBuildVersion`
-    def setSmallFlags(final int flags) {
+    def setSmallFlags(int flags) {
         def xml = readChunkHeader()
-        if (xml.type != ResType.RES_XML_TYPE) {
-            return
-        }
+        if (xml.type != ResType.RES_XML_TYPE) return
 
         def sp = readStringPool()
         byte[] targetBytes = [// platformBuildVersionCode
                               'p', 0, 'l', 0, 'a', 0, 't', 0, 'f', 0, 'o', 0, 'r', 0, 'm', 0, 'B', 0, 'u', 0, 'i', 0, 'l', 0, 'd', 0,
                               'V', 0, 'e', 0, 'r', 0, 's', 0, 'i', 0, 'o', 0, 'n', 0, 'C', 0, 'o', 0, 'd', 0, 'e', 0]
         int targetIndex = -1
-        final int N = sp.stringCount
+        int N = sp.stringCount
         for (int i = 0; i < N; i++) {
             def bytes = sp.strings[i]
             if (Arrays.equals(bytes, targetBytes)) {
@@ -37,10 +50,7 @@ public class AXmlEditor extends AssetEditor {
                 break
             }
         }
-
-        if (targetIndex == -1) {
-            return
-        }
+        if (targetIndex == -1) return
 
         while (tellp() < xml.size) {
             def chunk = readChunkHeader()
@@ -57,9 +67,7 @@ public class AXmlEditor extends AssetEditor {
                 if (nameIndex == targetIndex) {
                     // platformBuildVersionCode
                     skip(8)
-
-                    final int versionCode = readInt()
-
+                    int versionCode = readInt()
                     seek(tellp() - 4)
 
                     // The flag bits are:
@@ -71,7 +79,7 @@ public class AXmlEditor extends AssetEditor {
                     //                 nonResources Flag (1)
                     //                           ^^^ ^^^^ ^^^^
                     //                     platformBuildVersionCode (11) => MAX=0x7FF=4095
-                    final int newFlag = (flags << 11) | versionCode
+                    int newFlag = (flags << 11) | versionCode
                     writeInt(newFlag)
                     close()
                     return true
@@ -87,22 +95,16 @@ public class AXmlEditor extends AssetEditor {
         return false
     }
 
-    def setPackageId(final int pp, final Map idMaps) {
+    def setPackageId(int pp, Map idMaps) {
         def xml = readChunkHeader()
-        if (xml.type != ResType.RES_XML_TYPE) {
-            return false
-        }
-
+        if (xml.type != ResType.RES_XML_TYPE) return
         setPackageIdRecursive(pp, idMaps, xml.size)
         close()
-        return edited
+        return isEdited()
     }
 
-    private def setPackageIdRecursive(final int pp, final Map idMaps, final long size) {
-        if (tellp() >= size) {
-            return
-        }
-
+    private def setPackageIdRecursive(int pp, Map idMaps, long size) {
+        if (tellp() >= size) return
         def chunk = readChunkHeader()
         if (chunk.type == ResType.RES_XML_RESOURCE_MAP_TYPE) {
             def idCount = (chunk.size - chunk.headerSize) / 4
@@ -119,7 +121,6 @@ public class AXmlEditor extends AssetEditor {
         } else {
             skip(chunk.size - CHUNK_HEADER_SIZE)
         }
-
         setPackageIdRecursive(pp, idMaps, size)
     }
 
@@ -141,9 +142,9 @@ public class AXmlEditor extends AssetEditor {
                    stringPool: []]
     }
 
-    public void dumpXmlTree() {
+    void dumpXmlTree() {
         def xml = readXmlTree()
-        // TODO
+
     }
 
     private def readXmlTree() {

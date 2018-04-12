@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015-present wequick.net
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.ymlion.gradle.aapt
 
 import java.nio.ByteBuffer
@@ -5,42 +20,42 @@ import java.nio.ByteOrder
 
 /**
  * Class of c++ hex file (little endian) editor*/
-public class CppHexEditor {
+class CppHexEditor {
 
-    private File file
-    private File clipFile
-    private RandomAccessFile raf
-    private RandomAccessFile clipRaf
-    private boolean edited
-    private long lengthBeforeClip
+    private File mFile
+    private File mClipFile
+    private RandomAccessFile mRaf
+    private RandomAccessFile mClipRaf
+    private boolean mEdited
+    private long mLengthBeforeClip
 
-    public CppHexEditor(final File file) {
-        this.file = file
-        this.raf = new RandomAccessFile(file, 'rw')
+    CppHexEditor(File file) {
+        mFile = file
+        mRaf = new RandomAccessFile(file, 'rw')
     }
 
-    protected seek(final long offset) {
-        this.raf.seek(offset)
+    protected seek(long offset) {
+        mRaf.seek(offset)
     }
 
-    protected skip(final long count) {
-        this.raf.skipBytes((int) count)
+    protected skip(long count) {
+        mRaf.skipBytes((int) count)
     }
 
     protected tellp() {
-        return this.raf.getFilePointer()
+        return mRaf.getFilePointer()
     }
 
     protected length() {
-        return this.raf.length()
+        return mRaf.length()
     }
 
-    protected setLength(final long length) {
-        this.raf.setLength(length)
+    protected setLength(long length) {
+        mRaf.setLength(length)
     }
 
     protected close() {
-        this.raf.close()
+        mRaf.close()
     }
 
     /*
@@ -48,32 +63,31 @@ public class CppHexEditor {
      *  c++: little endian
      *  java: big endian
      */
-
     protected byte readByte() {
-        return this.raf.readByte()
+        return mRaf.readByte()
     }
 
     protected void writeByte(val) {
-        final def buffer = new byte[1]
+        def buffer = new byte[1]
         buffer[0] = (byte) (val & 0xFF)
         writeBytes(buffer)
     }
 
     protected short readShort() {
-        final def buffer = readBytes(2)
+        def buffer = readBytes(2)
         return getShort(buffer)
     }
 
-    protected short getShort(final byte[] buffer) {
-        final ByteBuffer bb = ByteBuffer.wrap(buffer)
+    protected short getShort(byte[] buffer) {
+        ByteBuffer bb = ByteBuffer.wrap(buffer)
         bb.order(ByteOrder.LITTLE_ENDIAN)
         return bb.getShort()
     }
 
     protected void writeShort(i) {
-        final def buffer = new byte[2];
-        buffer[1] = (byte) ((i >> 8) & 0xFF);
-        buffer[0] = (byte) (i & 0xFF);
+        def buffer = new byte[2]
+        buffer[1] = (byte) ((i >> 8) & 0xFF)
+        buffer[0] = (byte) (i & 0xFF)
         writeBytes(buffer)
     }
 
@@ -85,56 +99,53 @@ public class CppHexEditor {
     }
 
     protected void writeInt(i) {
-        final def buffer = new byte[4];
-        buffer[3] = (byte) ((i >> 24) & 0xFF);
-        buffer[2] = (byte) ((i >> 16) & 0xFF);
-        buffer[1] = (byte) ((i >> 8) & 0xFF);
-        buffer[0] = (byte) (i & 0xFF);
+        def buffer = new byte[4]
+        buffer[3] = (byte) ((i >> 24) & 0xFF)
+        buffer[2] = (byte) ((i >> 16) & 0xFF)
+        buffer[1] = (byte) ((i >> 8) & 0xFF)
+        buffer[0] = (byte) (i & 0xFF)
         writeBytes(buffer)
     }
 
     protected byte[] readBytes(n) {
-        final byte[] buffer = new byte[n]
-        this.raf.read(buffer)
+        byte[] buffer = new byte[n]
+        mRaf.read(buffer)
         return buffer
     }
 
-    protected void writeBytes(final byte[] buffer) {
-        this.raf.write(buffer)
-        if (!this.edited) {
-            this.edited = true
-        }
+    protected void writeBytes(byte[] buffer) {
+        mRaf.write(buffer)
+        if (!mEdited) mEdited = true
     }
 
-    protected void clipLaterData(final long pos) {
-        this.clipFile = new File(this.file.parentFile, "${file.name}~")
-        this.clipRaf = new RandomAccessFile(this.clipFile, 'rw')
+    protected void clipLaterData(long pos) {
+        mClipFile = new File(mFile.parentFile, "${mFile.name}~")
+        mClipRaf = new RandomAccessFile(mClipFile, 'rw')
 
-        this.lengthBeforeClip = this.raf.length()
-        def sc = this.raf.channel
-        def cc = this.clipRaf.channel
-        sc.transferTo(pos, this.lengthBeforeClip - pos, cc)
+        mLengthBeforeClip = mRaf.length()
+        def sc = mRaf.channel
+        def cc = mClipRaf.channel
+        sc.transferTo(pos, mLengthBeforeClip - pos, cc)
         sc.truncate(pos)
     }
 
-    protected void pasteLaterData(final long pos) {
-        final def newPos = tellp()
-        final def sc = this.raf.channel
-        final def cc = this.clipRaf.channel
+    protected void pasteLaterData(long pos) {
+        def newPos = tellp()
+        def sc = mRaf.channel
+        def cc = mClipRaf.channel
         cc.position(0L)
-        sc.transferFrom(cc, newPos, this.lengthBeforeClip - pos)
+        sc.transferFrom(cc, newPos, mLengthBeforeClip - pos)
 
-        this.clipRaf.close()
-        this.clipFile.delete()
+        mClipRaf.close()
+        mClipFile.delete()
     }
 
     /**
      * Print bytes in length with hex string
-     *
      * @param length
      * @return
      */
-    protected def dumpBytes(final long length) {
+    protected def dumpBytes(long length) {
         for (int i = 0; i < length; i++) {
             def s = String.format('%02X ', readByte())
             if (i % 16 == 0) {
@@ -144,19 +155,16 @@ public class CppHexEditor {
             } else if ((i + 5) % 4 == 0) {
                 s += " "
             }
-
             print s
         }
-
         println ""
     }
 
     /**
      * Check if has been written any bytes
-     *
      * @return true edited
      */
     protected boolean isEdited() {
-        return this.edited
+        return mEdited
     }
 }
