@@ -17,10 +17,9 @@ public class AaptPlugin implements Plugin<Project> {
 
         android.applicationVariants.all { BaseVariant variant ->
             def pr = project.tasks["process${variant.name.capitalize()}Resources"]
-            if (pr != null) {
+            if (pr != null && variant.name.equalsIgnoreCase('debug')) {
                 listener.setTaskName(pr.name)
                 listener.setApkVariant(variant)
-                listener.setPackageName(variant.applicationId)
             }
         }
     }

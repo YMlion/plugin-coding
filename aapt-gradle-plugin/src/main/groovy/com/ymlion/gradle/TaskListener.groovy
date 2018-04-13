@@ -1,6 +1,7 @@
 package com.ymlion.gradle
 
 import com.android.build.gradle.internal.api.ApplicationVariantImpl
+import com.android.build.gradle.internal.scope.TaskOutputHolder
 import com.android.build.gradle.internal.variant.BaseVariantData
 import com.android.build.gradle.tasks.ProcessAndroidResources
 import com.android.sdklib.BuildToolInfo
@@ -13,8 +14,10 @@ import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
 
 public class TaskListener implements TaskExecutionListener {
+    private static final int UNSET_TYPEID = 99
+    private static final int UNSET_ENTRYID = -1
 
-    Project mProject
+    Project project
     String taskName = ''
     ApplicationVariantImpl apkVariant
 
@@ -28,19 +31,19 @@ public class TaskListener implements TaskExecutionListener {
     //0x66
 
     TaskListener(Project project) {
-        mProject = project
+        this.project = project
     }
 
     @Override
     void beforeExecute(Task task) {
-        if (tasks.contains(task.name)) {
+        if (taskName == task.name) {
             println("before ${task.name} execute.")
         }
     }
 
     @Override
     void afterExecute(Task task, TaskState taskState) {
-        if (tasks.contains(task.name)) {
+        if (taskName == task.name) {
             println("after ${task.name} execute.")
             BaseVariantData variantData = apkVariant.variantData
             variantData.outputScope.getOutputs(TaskOutputHolder.TaskOutputType.PROCESSED_RES).each {
@@ -53,10 +56,10 @@ public class TaskListener implements TaskExecutionListener {
      * Hook aapt task to slice asset package and resolve library resource ids*/
     private def hookAapt(ProcessAndroidResources aaptTask, File apFile) {
         // Unpack resources.ap_
-        def unzipApDir = new File(apFile.parentFile, Files.getNameWithoutExtension(apFile.name))
-        unzipApDir.delete()
+        def unzipApDir = new File(apFile.parentFile, "ap_unzip")
+        unzipApDir.deleteDir()
         project.copy {
-            from apFiles
+            from project.zipTree(apFile)
             into unzipApDir
 
             include 'AndroidManifest.xml'
@@ -65,35 +68,24 @@ public class TaskListener implements TaskExecutionListener {
         }
 
         // Modify assets
-        File symbolFile = new File(aaptTask.textSymbolOutputDir, 'R.txt')
+        File symbolFile = aaptTask.textSymbolOutputFile
         prepareSplit(symbolFile)
         File sourceOutputDir = aaptTask.sourceOutputDir
         def packagePath = apkVariant.applicationId.replaceAll('\\.', '/')
         File rJavaFile = new File(sourceOutputDir, "${packagePath}/R.java")
-        def rev = android.buildToolsRevision
+        def rev = project.android.buildToolsRevision
         def filteredResources = new HashSet()
         def updatedResources = new HashSet()
-
-        // Collect the DynamicRefTable [pkgId => pkgName]
-        def libRefTable = [:]
-        mTransitiveDependentLibProjects.each {
-            def libAapt = aaptTask.tasks.withType(ProcessAndroidResources.class).find {
-                aaptTask.variantName.startsWith('release')
-            }
-            def pkgName = libAapt.packageForR
-            def pkgId = sPackageIds[aaptTask.name]
-            libRefTable.put(pkgId, pkgName)
-        }
 
         Aapt aapt = new Aapt(unzipApDir, rJavaFile, symbolFile, rev)
         if (this.retainedTypes != null && this.retainedTypes.size() > 0) {
             aapt.filterResources(this.retainedTypes, filteredResources)
-            Log.success "[${project.name}] split library res files..."
+            println "[${project.name}] split library res files..."
 
-            aapt.filterPackage(this.retainedTypes, this.packageId, this.idMaps, libRefTable,
+            aapt.filterPackage(this.retainedTypes, this.packageId, this.idMaps, null,
                 this.retainedStyleables, updatedResources)
 
-            Log.success "[${project.name}] slice asset package and reset package id..."
+            println "[${project.name}] slice asset package and reset package id..."
 
             String pkg = apkVariant.applicationId
             // Overwrite the aapt-generated R.java with full edition
@@ -109,10 +101,10 @@ public class TaskListener implements TaskExecutionListener {
                 }
             }
 
-            Log.success "[${project.name}] split library R.java files..."
+            println "[${project.name}] split library R.java files..."
         } else {
             if (sourceOutputDir.deleteDir()) {
-                Log.success "[${project.name}] remove R.java..."
+                println "[${project.name}] remove R.java..."
             }
 
             symbolFile.delete() // also delete the generated R.txt
@@ -166,7 +158,6 @@ public class TaskListener implements TaskExecutionListener {
         def retainedEntries = []
         def retainedPublicEntries = []
         def retainedStyleables = []
-        def reservedKeys = getReservedResourceKeys()
 
         bundleEntries.each { k, Map be ->
             be._typeId = UNSET_TYPEID // for sort
@@ -179,11 +170,6 @@ public class TaskListener implements TaskExecutionListener {
                 be._entryId = le.entryId
                 retainedPublicEntries.add(be)
                 publicEntries.remove(k)
-                return
-            }
-
-            if (reservedKeys.contains(k)) {
-                be.isStyleable ? retainedStyleables.add(be) : retainedEntries.add(be)
                 return
             }
 
