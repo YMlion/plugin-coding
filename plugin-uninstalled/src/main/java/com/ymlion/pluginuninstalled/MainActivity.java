@@ -16,5 +16,5 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_p4).setOnClickListener(
                 v -> startActivity(new Intent(MainActivity.this, Plugin4Activity.class)));
     }
-    //adb push app/build/outputs/apk/debug/app-debug.apk /sdcard/apkload_plugin.apk
+    //adb push plugin-uninstalled/build/outputs/apk/debug/plugin-uninstalled-debug.apk /sdcard/apkload_plugin.apk
 }
