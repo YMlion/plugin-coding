@@ -1,1 +1,1 @@
-include ':app', /*':aapt-gradle-plugin', */':plugin-uninstalled', ':plugin-installed'
+include ':app', ':aapt-gradle-plugin', ':plugin-uninstalled', ':plugin-installed'

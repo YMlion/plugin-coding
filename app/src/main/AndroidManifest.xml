@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".$1StubActivity"/>
+            android:name=".S1StubActivity"/>
         <activity
             android:name=".StubActivity"
             android:process=":stub">
