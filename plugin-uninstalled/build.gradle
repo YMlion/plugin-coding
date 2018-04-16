@@ -30,4 +30,8 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 // 修改打包apk资源id
-//apply plugin: 'AaptPlugin'
+apply plugin: 'AaptPlugin'
+
+aapt {
+    packageId = 0x55
+}

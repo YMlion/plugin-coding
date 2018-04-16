@@ -12,6 +12,7 @@ public class AaptPlugin implements Plugin<Project> {
 
         def listener = new TaskListener(project)
         project.gradle.addListener(listener)
+        project.extensions.create('aapt', AaptExtension)
 
         def android = project.android
 

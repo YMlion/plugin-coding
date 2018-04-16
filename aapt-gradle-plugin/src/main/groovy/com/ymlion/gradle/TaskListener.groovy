@@ -21,14 +21,15 @@ public class TaskListener implements TaskExecutionListener {
     String taskName = ''
     ApplicationVariantImpl apkVariant
 
-    def idMaps = [:]
-    def idStrMaps = [:]
-    def retainedTypes = []
-    def retainedStyleables = []
-    def allTypes = []
-    def allStyleables = []
-    def packageId = 102
-    //0x66
+    LinkedHashMap<Integer, Integer> idMaps
+    LinkedHashMap<String, String> idStrMaps
+    ArrayList retainedTypes
+    ArrayList retainedStyleables
+    /** List of all resource types */
+    ArrayList allTypes
+
+    /** List of all resource styleables */
+    ArrayList allStyleables
 
     TaskListener(Project project) {
         this.project = project
@@ -56,6 +57,7 @@ public class TaskListener implements TaskExecutionListener {
      * Hook aapt task to slice asset package and resolve library resource ids*/
     private def hookAapt(ProcessAndroidResources aaptTask, File apFile) {
         // Unpack resources.ap_
+        // build/intermediates/res/debug/resources-debug.ap_
         def unzipApDir = new File(apFile.parentFile, "ap_unzip")
         unzipApDir.deleteDir()
         project.copy {
@@ -68,8 +70,10 @@ public class TaskListener implements TaskExecutionListener {
         }
 
         // Modify assets
+        // build/intermediates/symbols/debug/R.txt
         File symbolFile = aaptTask.textSymbolOutputFile
         prepareSplit(symbolFile)
+        // build/generated/source/r/debug/
         File sourceOutputDir = aaptTask.sourceOutputDir
         def packagePath = apkVariant.applicationId.replaceAll('\\.', '/')
         File rJavaFile = new File(sourceOutputDir, "${packagePath}/R.java")
@@ -82,7 +86,7 @@ public class TaskListener implements TaskExecutionListener {
             aapt.filterResources(this.retainedTypes, filteredResources)
             println "[${project.name}] split library res files..."
 
-            aapt.filterPackage(this.retainedTypes, this.packageId, this.idMaps, null,
+            aapt.filterPackage(this.retainedTypes, this.project.aapt.packageId, this.idMaps, null,
                 this.retainedStyleables, updatedResources)
 
             println "[${project.name}] slice asset package and reset package id..."
@@ -151,7 +155,6 @@ public class TaskListener implements TaskExecutionListener {
         def idsFile = symbolFile
         if (!idsFile.exists()) return
 
-        def publicEntries = SymbolParser.getResourceEntries(new File(''))
         def bundleEntries = SymbolParser.getResourceEntries(idsFile)
         def staticIdMaps = [:]
         def staticIdStrMaps = [:]
@@ -162,43 +165,9 @@ public class TaskListener implements TaskExecutionListener {
         bundleEntries.each { k, Map be ->
             be._typeId = UNSET_TYPEID // for sort
             be._entryId = UNSET_ENTRYID
-
-            Map le = publicEntries.get(k)
-            if (le != null) {
-                // Use last built id
-                be._typeId = le.typeId
-                be._entryId = le.entryId
-                retainedPublicEntries.add(be)
-                publicEntries.remove(k)
-                return
-            }
-
-            // TODO: handle the resources addition by aar version conflict or something
-            //            if (be.type != 'id') {
-            //                throw new Exception(
-            //                        "Missing library resource entry: \"$k\", try to cleanLib and buildLib.")
-            //            }
             be.isStyleable ? retainedStyleables.add(be) : retainedEntries.add(be)
         }
 
-        // TODO: retain deleted public entries
-        if (publicEntries.size() > 0) {
-            throw new RuntimeException(
-                "No support deleting resources on lib.* now!\n" + "  - ${publicEntries.keySet().join(", ")}\n" +
-                    "see https://github.com/wequick/Small/issues/53 for more information.")
-
-            //            publicEntries.each { k, e ->
-            //                e._typeId = e.typeId
-            //                e._entryId = e.entryId
-            //                e.entryId = Aapt.ID_DELETED
-            //
-            //                def re = retainedPublicEntries.find{it.type == e.type}
-            //                e.typeId = (re != null) ? re.typeId : Aapt.ID_DELETED
-            //            }
-            //            publicEntries.each { k, e ->
-            //                retainedPublicEntries.add(e)
-            //            }
-        }
         if (retainedEntries.size() == 0 && retainedPublicEntries.size() == 0) {
             this.retainedTypes = [] // Doesn't have any resources
             return
@@ -294,7 +263,7 @@ public class TaskListener implements TaskExecutionListener {
 
         // Resort retained resources
         def retainedTypes = []
-        def pid = (this.packageId << 24)
+        def pid = (this.project.aapt.packageId << 24)
         def currType = null
         retainedEntries.each { e ->
             // Prepare entry id maps for resolving resources.arsc and binary xml files

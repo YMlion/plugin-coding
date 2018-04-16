@@ -62,37 +62,37 @@ public final class ZipUtils {
     }
 
     private void writeEntry(ZipFile zf, ZipOutputStream os, ZipEntry ze) throws IOException {
-        ZipEntry ze2 = new ZipEntry(ze.getName());
-        ze2.setMethod(ze.getMethod());
-        ze2.setTime(ze.getTime());
-        ze2.setComment(ze.getComment());
-        ze2.setExtra(ze.getExtra());
+        ZipEntry ze2 = new ZipEntry(ze.getName())
+        ze2.setMethod(ze.getMethod())
+        ze2.setTime(ze.getTime())
+        ze2.setComment(ze.getComment())
+        ze2.setExtra(ze.getExtra())
         if (ze.getMethod() == ZipEntry.STORED) {
-            ze2.setSize(ze.getSize());
-            ze2.setCrc(ze.getCrc());
+            ze2.setSize(ze.getSize())
+            ze2.setCrc(ze.getCrc())
         }
-        os.putNextEntry(ze2);
-        writeBytes(zf, ze, os);
+        os.putNextEntry(ze2)
+        writeBytes(zf, ze, os)
     }
 
     /**
      * Writes all the bytes for a given entry to the specified output stream.*/
     private synchronized void writeBytes(ZipFile zf, ZipEntry ze, ZipOutputStream os)
         throws IOException {
-        int n;
+        int n
 
-        InputStream is = null;
+        InputStream is = null
         try {
-            is = zf.getInputStream(ze);
-            long left = ze.getSize();
+            is = zf.getInputStream(ze)
+            long left = ze.getSize()
 
             while ((left > 0) && (n = is.read(buffer, 0, buffer.length)) != -1) {
-                os.write(buffer, 0, n);
-                left -= n;
+                os.write(buffer, 0, n)
+                left -= n
             }
         } finally {
             if (is != null) {
-                is.close();
+                is.close()
             }
         }
     }

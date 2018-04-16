@@ -19,8 +19,7 @@ import groovy.io.FileType
 import org.gradle.api.Project
 
 /**
- * Class to expand aapt function
- */
+ * Class to expand aapt function*/
 public class Aapt {
 
     public static final int ID_DELETED = -1
@@ -47,8 +46,8 @@ public class Aapt {
      * @param idMaps
      */
     void filterPackage(List retainedTypes, int pp, Map idMaps, Map libRefTable,
-                       List retainedStyleables,
-                       Set outUpdatedResources) {
+        List retainedStyleables,
+        Set outUpdatedResources) {
         File arscFile = new File(mAssetDir, FILE_ARSC)
         def arscEditor = new ArscEditor(arscFile, mToolsRevision)
 
@@ -105,9 +104,9 @@ public class Aapt {
      */
     void manifest(Map options) {
         // TODO: generate hex file without aapt
-//        File file = new File(mAssetDir, 'AndroidManifest.xml')
-//        AXmlEditor editor = new AXmlEditor(file)
-//        editor.createAndroidManifest(options)
+        //        File file = new File(mAssetDir, 'AndroidManifest.xml')
+        //        AXmlEditor editor = new AXmlEditor(file)
+        //        editor.createAndroidManifest(options)
     }
 
     void manifest(Project project, Map options) {
@@ -122,7 +121,7 @@ public class Aapt {
         project.exec {
             executable options.aaptExe
             args 'package', '-f', '-M', tempManifest.path,
-                    '-I', options.baseAsset, '-F', tempZip.path
+                '-I', options.baseAsset, '-F', tempZip.path
         }
         // Unzip the compiled apk
         tempManifest.delete()
@@ -171,8 +170,7 @@ public class Aapt {
         def resDir = new File(mAssetDir, 'res')
         if (resDir.exists()) {
             resDir.listFiles().each { dir ->
-                dir.listFiles().each { file ->
-                    outFilters.add("res/$dir.name/$file.name" as String)
+                dir.listFiles().each { file -> outFilters.add("res/$dir.name/$file.name" as String)
                 }
             }
             return resDir.deleteDir()
@@ -181,8 +179,10 @@ public class Aapt {
     }
 
     /** Reset package id for *.xml */
-    private static void resetAllXmlPackageId(File dir, int pp, Map idMaps, Set outUpdatedResources) {
-        int len = dir.canonicalPath.length() + 1 // bypass '/'
+    private static void resetAllXmlPackageId(File dir, int pp, Map idMaps,
+        Set outUpdatedResources) {
+        int len = dir.canonicalPath.length() + 1
+        // bypass '/'
         def isWindows = (File.separator != ENTRY_SEPARATOR)
         dir.eachFileRecurse(FileType.FILES) { file ->
             if (file.name.endsWith('.xml')) {
@@ -190,7 +190,8 @@ public class Aapt {
                 editor.setPackageId(pp, idMaps)
                 if (outUpdatedResources != null) {
                     def path = file.canonicalPath.substring(len)
-                    if (isWindows) { // compat for windows
+                    if (isWindows) {
+                        // compat for windows
                         path = path.replaceAll('\\\\', ENTRY_SEPARATOR)
                     }
                     outUpdatedResources.add(path)
@@ -218,18 +219,19 @@ package ${pkg};
 
 public final class R {
 """
+
         types.each { t ->
             if (t.entries.size() == 0) return
             pw.println "    public static final class ${t.name} {"
-            t.entries.each { e ->
-                pw.println "        public static final ${t.type} ${e.name} = ${e._vs};"
+            t.entries.each {
+                e -> pw.println "        public static final ${t.type} ${e.name} = ${e._vs};"
             }
             pw.println "    }"
         }
         if (styleables != null && styleables.size() > 0) {
             pw.println "    public static final class styleable {"
-            styleables.each { e ->
-                pw.println "        public static final ${e.vtype} ${e.key} = ${e.idStr};"
+            styleables.each {
+                e -> pw.println "        public static final ${e.vtype} ${e.key} = ${e.idStr};"
             }
             pw.println "    }"
         }
@@ -277,7 +279,7 @@ public final class R {
                     skip = true
                     return
                 }
-                currType = [declare:str, name:name, values:[]]
+                currType = [declare: str, name: name, values: []]
                 currIdMap = [:]
                 entries.each {
                     currIdMap.put(it.name, it._vs)
@@ -344,8 +346,7 @@ public final class R {
         rtext.write('')
         def pw = rtext.newPrintWriter()
         retainedTypes.each { t ->
-            t.entries.each { e ->
-                pw.write("${t.type} ${t.name} ${e.name} ${e._vs}\n")
+            t.entries.each { e -> pw.write("${t.type} ${t.name} ${e.name} ${e._vs}\n")
             }
         }
         retainedStyleables.each {
