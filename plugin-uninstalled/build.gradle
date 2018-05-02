@@ -29,6 +29,22 @@ dependencies {
     implementation 'com.android.support:design:26.1.0'
     testImplementation 'junit:junit:4.12'
 }
+
+buildscript {
+
+    repositories {
+        maven {
+            url uri('/../repo')
+        }
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.ymlion.gradle:aapt-gradle-plugin:1.0.0'
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
 // 修改打包apk资源id
 apply plugin: 'AaptPlugin'
 

@@ -6,11 +6,11 @@ import org.gradle.api.Project
 
 /**
  * Created by YMlion on 2018/4/11.*/
-public class AaptPlugin implements Plugin<Project> {
+class AaptPlugin implements Plugin<Project> {
 
     @Override void apply(Project project) {
 
-        def listener = new TaskListener(project)
+        def listener = new ResourceListener(project)
         project.gradle.addListener(listener)
         project.extensions.create('aapt', AaptExtension)
 

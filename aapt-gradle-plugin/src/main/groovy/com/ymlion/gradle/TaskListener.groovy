@@ -13,7 +13,7 @@ import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
 
-public class TaskListener implements TaskExecutionListener {
+class TaskListener implements TaskExecutionListener {
     private static final int UNSET_TYPEID = 99
     private static final int UNSET_ENTRYID = -1
 
