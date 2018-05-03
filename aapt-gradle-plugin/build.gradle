@@ -9,13 +9,13 @@ dependencies {
 }
 
 jar {
-    from {
+    /*from {
         //添加依懒到打包文件
-        zipTree('libs/parser.jar')
-        /*configurations.compile.collect {
+        configurations.compile.collect {
             it.isDirectory() ? it : zipTree(it)
-        }*/
-    }
+        }
+    }*/
+    from(zipTree('libs/parser.jar'))
 }
 
 repositories {
