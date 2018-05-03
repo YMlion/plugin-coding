@@ -46,8 +46,7 @@ public class Aapt {
      * @param idMaps
      */
     void filterPackage(List retainedTypes, int pp, Map idMaps, Map libRefTable,
-        List retainedStyleables,
-        Set outUpdatedResources) {
+        List retainedStyleables, Set outUpdatedResources) {
         File arscFile = new File(mAssetDir, FILE_ARSC)
         def arscEditor = new ArscEditor(arscFile, mToolsRevision)
 

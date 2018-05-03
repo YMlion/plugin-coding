@@ -5,15 +5,25 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
     compile 'com.android.tools.build:gradle:3.0.1'
-    compile files("libs/parser.jar")
+    compile files('libs/parser.jar')
+}
+
+jar {
+    from {
+        //添加依懒到打包文件
+        zipTree('libs/parser.jar')
+        /*configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }*/
+    }
 }
 
 repositories {
     mavenCentral()
 }
 
-group='com.ymlion.gradle'
-version='1.0.0'
+group = 'com.ymlion.gradle'
+version = '1.0.0'
 
 uploadArchives {
     repositories {

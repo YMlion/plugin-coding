@@ -5,6 +5,10 @@ import com.android.build.gradle.internal.scope.TaskOutputHolder
 import com.android.build.gradle.internal.variant.BaseVariantData
 import com.android.build.gradle.tasks.ProcessAndroidResources
 import com.android.sdklib.BuildToolInfo
+import com.ymlion.parser.ArscFile
+import com.ymlion.parser.XmlFile
+import com.ymlion.parser.util.FileEditor
+import groovy.io.FileType
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
@@ -57,24 +61,31 @@ class ResourceListener implements TaskExecutionListener {
         // Modify assets
         // build/intermediates/symbols/debug/R.txt
         File symbolFile = aaptTask.textSymbolOutputFile
+
         // build/generated/source/r/debug/
         File sourceOutputDir = aaptTask.sourceOutputDir
         def packagePath = apkVariant.applicationId.replaceAll('\\.', '/')
         File rJavaFile = new File(sourceOutputDir, "${packagePath}/R.java")
+        def editor = new FileEditor()
+        editor.resetRJava(symbolFile, this.project.aapt.packageId)
+        editor.resetRJava(rJavaFile, this.project.aapt.packageId)
 
         String aaptExe = aaptTask.buildTools.getPath(BuildToolInfo.PathId.AAPT)
-        def updatedResources = HashSet()
+        def updatedResources = new HashSet()
+        resetAllXmlPackageId(unzipApDir, this.project.aapt.packageId, updatedResources)
 
         // Re-add updated entries.
         // $ aapt add resources.ap_ file1 file2 ...
+        def newApFile = new File(apFile.parentFile, "resources-debug-new.ap_")
         def nullOutput = new ByteArrayOutputStream()
         if (System.properties['os.name'].toLowerCase().contains('windows')) {
             // Avoid the command becomes too long to execute on Windows.
             updatedResources.each { res ->
+                println res
                 project.exec {
                     executable aaptExe
                     workingDir unzipApDir
-                    args 'add', apFile.path, res
+                    args 'add', newApFile.path, res
 
                     standardOutput = nullOutput
                 }
@@ -83,7 +94,7 @@ class ResourceListener implements TaskExecutionListener {
             project.exec {
                 executable aaptExe
                 workingDir unzipApDir
-                args 'add', apFile.path
+                args 'add', newApFile.path
                 args updatedResources
 
                 // store the output instead of printing to the console
@@ -91,4 +102,27 @@ class ResourceListener implements TaskExecutionListener {
             }
         }
     }
+
+    /** Reset package id for *.xml */
+    private static void resetAllXmlPackageId(File dir, int pp, Set outUpdatedResources) {
+        int len = dir.canonicalPath.length() + 1
+        // bypass '/'
+        def isWindows = (File.separator != '/')
+        dir.eachFileRecurse(FileType.FILES) { file ->
+            if (file.name.endsWith('.xml')) {
+                new XmlFile(file).resetPackageId(pp)
+            } else if (file.name.endsWith('.arsc')) {
+                new ArscFile(file).resetPackageId(pp)
+            }
+            if (outUpdatedResources != null) {
+                def path = file.canonicalPath.substring(len)
+                if (isWindows) {
+                    // compat for windows
+                    path = path.replaceAll('\\\\', '/')
+                }
+                outUpdatedResources.add(path)
+            }
+        }
+    }
+
 }
